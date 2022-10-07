@@ -51,7 +51,7 @@ impl Interpreter {
         Ok(())
     }
 
-    fn run_brainfuck_code(&mut self, bf_code: &str) -> Result<(), error::InterpreterError> {
+    fn run_brainfuck_code(&mut self, bf_code: &str) -> Result<(), InterpreterError> {
         for (i, ch) in bf_code.chars().enumerate() {
             match BfCommand::from_char(ch, i) {
                 Some(cmd) => {
@@ -66,7 +66,7 @@ impl Interpreter {
         Ok(())
     }
 
-    fn execute(&mut self, cmd: BfCommand) -> Result<(), error::InterpreterError> {
+    fn execute(&mut self, cmd: BfCommand) -> Result<(), InterpreterError> {
         match cmd {
             BfCommand::IncPtr => {
                 self.pointer += 1;
@@ -74,7 +74,7 @@ impl Interpreter {
                     if self.features.contains(&arguments::Feature::ReversePointer) {
                         self.pointer = 0;
                     } else {
-                        return Err(error::InterpreterError::new(
+                        return Err(InterpreterError::new(
                             format!("Pointer out of bounds {}", self.pointer),
                             11,
                         ));
@@ -86,7 +86,7 @@ impl Interpreter {
                     if self.features.contains(&arguments::Feature::ReversePointer) {
                         self.pointer = self.array_size - 1;
                     } else {
-                        return Err(error::InterpreterError::new(
+                        return Err(InterpreterError::new(
                             format!("Pointer out of bounds {}", self.pointer),
                             11,
                         ));
@@ -109,7 +109,7 @@ impl Interpreter {
                 self.cells[self.pointer] = match std::io::stdin().bytes().next() {
                     Some(Ok(byte)) => byte,
                     Some(Err(e)) => {
-                        return Err(error::InterpreterError::new(
+                        return Err(InterpreterError::new(
                             format!("Failed to read byte from stdin: {}", e),
                             12,
                         ));
@@ -135,7 +135,7 @@ impl Interpreter {
                         }
                     }
                     _ => {
-                        return Err(error::InterpreterError::new(
+                        return Err(InterpreterError::new(
                             format!("Unmatched closing bracket at position {}", i),
                             14,
                         ));
