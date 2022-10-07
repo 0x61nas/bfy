@@ -128,6 +128,12 @@ impl Interpreter {
         }
         Ok(())
     }
+
+    pub fn reset(&mut self) {
+        self.cells = vec![0; self.array_size];
+        self.pointer = 0;
+        self.brackets = Vec::new();
+    }
 }
 
 

@@ -46,7 +46,7 @@ impl Repl {
         }
     }
 
-    fn run_repl_cmd(&self, input: String) {
+    fn run_repl_cmd(&mut self, input: String) {
         match input.trim().get(1..).unwrap() {
             "fuck" => {
                 println!("Bye bye :D");
@@ -78,13 +78,19 @@ impl Repl {
                         error!("Failed to save history to file: {}", e);
                     }
                 }
-            }
+            },
+            "reset" | "r" => {
+                println!("Resetting REPL");
+                self.interpreter.reset();
+            },
             "help" => {
                 println!("!array, !a: print the current array");
                 println!("!array_size, !as: print the current array size");
                 println!("!pointer, !p: print the current pointer value");
                 println!("!history, !h: print the history of the commands");
                 println!("!save, !s: save the history to a file");
+                println!("!load, !l: load the history from a file");
+                println!("!reset, !r: reset the interpreter");
                 println!("!help: show this fu*king help message");
                 println!("!fuck: exit the REPL mode");
             }
