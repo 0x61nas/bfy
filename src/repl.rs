@@ -1,5 +1,5 @@
-use std::io::Write;
 use crate::interpreter::Interpreter;
+use std::io::Write;
 
 struct Repl {
     interpreter: Interpreter,
@@ -71,8 +71,7 @@ impl Repl {
                         }
                     }
                     "save" | "s" => {
-                        let file_name = cmd.next()
-                            .unwrap_or("brainfuck_repl_history.bfr");
+                        let file_name = cmd.next().unwrap_or("brainfuck_repl_history.bfr");
 
                         println!("Saving history to file: {file_name}");
                         match std::fs::write(file_name, self.history.join("\n")) {
@@ -85,25 +84,27 @@ impl Repl {
                         }
                     }
                     "load" | "l" => {
-                        let file_name = cmd.next()
-                            .unwrap_or("brainfuck_repl_history.bfr");
+                        let file_name = cmd.next().unwrap_or("brainfuck_repl_history.bfr");
 
                         println!("Loading history from file: {file_name}");
                         match std::fs::read_to_string(file_name) {
                             Ok(history) => {
                                 info!("Successfully loaded history from file: {file_name}");
-                                self.history = history.split("\n")
-                                    .map(|s| s.to_string())
-                                    .collect();
+                                self.history = history.split("\n").map(|s| s.to_string()).collect();
 
                                 // Run all commands in history
                                 for cmd in self.history.iter() {
                                     match self.interpreter.run(Some(cmd.clone())) {
                                         Ok(_) => {
-                                            info!("Successfully ran brainfuck source code from REPL");
+                                            info!(
+                                                "Successfully ran brainfuck source code from REPL"
+                                            );
                                         }
                                         Err(e) => {
-                                            error!("Failed to run brainfuck source code from REPL: {}", e);
+                                            error!(
+                                                "Failed to run brainfuck source code from REPL: {}",
+                                                e
+                                            );
                                         }
                                     }
                                 }
@@ -128,10 +129,9 @@ impl Repl {
                         println!("!help: show this fu*king help message");
                         println!("!fuck: exit the REPL mode");
                     }
-                    _ => println!("Unknown command: {}, type !help to show the help",
-                                  input)
+                    _ => println!("Unknown command: {}, type !help to show the help", input),
                 }
-            },
+            }
             None => {}
         }
     }
@@ -140,12 +140,14 @@ impl Repl {
 pub fn start(interpreter: Interpreter) {
     info!("Entering REPL mode");
     println!("Welcome to the brainfuck REPL mode! :)");
-    println!("Brainfuck interpreter v {}\nBy {}",
-             clap::crate_version!(), clap::crate_authors!());
+    println!(
+        "Brainfuck interpreter v {}\nBy {}",
+        clap::crate_version!(),
+        clap::crate_authors!()
+    );
     println!("Enter your brainfuck code and press enter to run it.");
     println!("Enter !fuck to exit :D");
     println!("Enter !help fuck to get more help");
 
-    Repl::new(interpreter)
-        .run();
+    Repl::new(interpreter).run();
 }

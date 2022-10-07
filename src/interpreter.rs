@@ -1,7 +1,7 @@
-use std::io::{Read, Write};
-use std::usize;
 use crate::arguments;
 use crate::interpreter::error::InterpreterError;
+use std::io::{Read, Write};
+use std::usize;
 
 pub struct Interpreter {
     pub cells: Vec<u8>,
@@ -13,9 +13,11 @@ pub struct Interpreter {
 }
 
 impl Interpreter {
-    pub fn new(array_size: usize,
-               bf_code: Option<String>,
-               features: Vec<arguments::Feature>) -> Self {
+    pub fn new(
+        array_size: usize,
+        bf_code: Option<String>,
+        features: Vec<arguments::Feature>,
+    ) -> Self {
         Self {
             cells: vec![0; array_size],
             pointer: 0,
@@ -32,12 +34,12 @@ impl Interpreter {
                 self.bf_code.push_str(&*bf_code);
                 bf_code
             }
-            None => self.bf_code.clone()
+            None => self.bf_code.clone(),
         };
 
         match self.run_brainfuck_code(&bf_code) {
             Ok(_) => Ok(0),
-            Err(e) => Err(e)
+            Err(e) => Err(e),
         }
     }
 
@@ -48,7 +50,6 @@ impl Interpreter {
         }
         Ok(())
     }
-
 
     fn run_brainfuck_code(&mut self, bf_code: &str) -> Result<(), error::InterpreterError> {
         for (i, ch) in bf_code.chars().enumerate() {
@@ -93,17 +94,17 @@ impl Interpreter {
                 } else {
                     self.pointer -= 1;
                 }
-            },
+            }
             BfCommand::IncVal => {
                 self.cells[self.pointer] = self.cells[self.pointer].wrapping_add(1);
-            },
+            }
             BfCommand::DecVal => {
                 self.cells[self.pointer] = self.cells[self.pointer].wrapping_sub(1);
-            },
+            }
             BfCommand::Print => {
                 print!("{}", self.cells[self.pointer] as char);
                 std::io::stdout().flush().unwrap();
-            },
+            }
             BfCommand::Read => {
                 self.cells[self.pointer] = match std::io::stdin().bytes().next() {
                     Some(Ok(byte)) => byte,
@@ -120,10 +121,10 @@ impl Interpreter {
                         ));
                     }
                 };
-            },
+            }
             BfCommand::LoopStart(i) => {
                 self.brackets.push(BfCommand::LoopStart(i));
-            },
+            }
             BfCommand::LoopEnd(i) => {
                 let open_bracket = self.brackets.pop();
                 match open_bracket {
@@ -132,7 +133,7 @@ impl Interpreter {
                             let code = self.bf_code[j..i].to_string();
                             self.iterate(code)?;
                         }
-                    },
+                    }
                     _ => {
                         return Err(error::InterpreterError::new(
                             format!("Unmatched closing bracket at position {}", i),
@@ -151,7 +152,6 @@ impl Interpreter {
         self.brackets = Vec::new();
     }
 }
-
 
 #[derive(Debug, PartialEq)]
 enum BfCommand {

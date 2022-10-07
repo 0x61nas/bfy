@@ -1,7 +1,7 @@
 mod arguments;
 mod interpreter;
-mod utils;
 mod repl;
+mod utils;
 
 use clap::Parser;
 
@@ -22,7 +22,7 @@ fn main() {
     let mut interpreter = interpreter::Interpreter::new(
         args.array_size,
         utils::read_brainfuck_code_if_any(&args.source),
-        args.features.unwrap_or_else(|| vec![])
+        args.features.unwrap_or_else(|| vec![]),
     );
 
     match args.source {
@@ -30,7 +30,10 @@ fn main() {
             info!("Running brainfuck source code from file: {}", source);
             match interpreter.run(None) {
                 Ok(exit_code) => {
-                    println!("Successfully ran brainfuck source code from file: {}", source);
+                    println!(
+                        "Successfully ran brainfuck source code from file: {}",
+                        source
+                    );
                     println!("Exiting with code: {exit_code}");
                     std::process::exit(0);
                 }
@@ -40,9 +43,6 @@ fn main() {
                 }
             }
         }
-        None => {
-            repl::start(interpreter)
-        }
+        None => repl::start(interpreter),
     }
 }
-

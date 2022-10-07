@@ -10,9 +10,7 @@ pub(crate) fn read_brainfuck_code_if_any(source: &Option<String>) -> Option<Stri
                     std::process::exit(1);
                 }
             }
-        },
-        None => {
-            None
         }
+        None => None,
     }
 }
