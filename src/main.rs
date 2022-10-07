@@ -4,8 +4,10 @@ mod utils;
 mod repl;
 
 use clap::Parser;
+
 extern crate pretty_env_logger;
-#[macro_use] extern crate log;
+#[macro_use]
+extern crate log;
 
 use arguments::Args;
 
@@ -16,15 +18,12 @@ fn main() {
     let args = Args::parse();
     info!("Parsed command line arguments: {:?}", args);
 
-    if args.verbose {
-        info!("Verbose mode enabled");
-    }
-
     info!("Initializing interpreter");
     let mut interpreter = interpreter::Interpreter::new(
         args.array_size,
         utils::read_brainfuck_code_if_any(&args.source),
-        args.features.unwrap_or_else(|| vec![]));
+        args.features.unwrap_or_else(|| vec![])
+    );
 
     match args.source {
         Some(source) => {
@@ -40,7 +39,7 @@ fn main() {
                     std::process::exit(code);
                 }
             }
-        },
+        }
         None => {
             repl::start(interpreter)
         }

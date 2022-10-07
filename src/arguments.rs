@@ -3,9 +3,6 @@ use clap::{arg, Parser, ValueEnum};
 #[derive(Parser, Debug)]
 #[command(author, about, long_about = None, version)]
 pub struct Args {
-    /// To be verbose
-    #[arg(short, long)]
-    pub verbose: bool,
     /// The brainfuck source code file to run (if not will be entered in REPL mode)
     #[arg(default_value = None)]
     pub source: Option<String>,
