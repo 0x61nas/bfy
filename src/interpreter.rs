@@ -1,4 +1,4 @@
-use std::io::{Write};
+use std::io::{Read, Write};
 use std::usize;
 use crate::arguments;
 
@@ -25,7 +25,7 @@ impl Interpreter {
         }
     }
 
-    pub fn run(&mut self, bf_code: Option<String>) -> Result<u32, (String, u32)> {
+    pub fn run(&mut self, bf_code: Option<String>) -> Result<i32, (String, i32)> {
         let bf_code = match bf_code {
             Some(bf_code) => {
                 self.bf_code.push_str(&*bf_code);
@@ -98,10 +98,15 @@ impl Interpreter {
                 std::io::stdout().flush().unwrap();
             },
             BfCommand::Read => {
-                let mut input = String::new();
-                // TODO: Handle errors, and read only one byte
-                std::io::stdin().read_line(&mut input).unwrap();
-                self.cells[self.pointer] = input.chars().next().unwrap() as u8;
+                self.cells[self.pointer] = match std::io::stdin().bytes().next() {
+                    Some(Ok(byte)) => byte,
+                    Some(Err(e)) => {
+                        return Err(format!("Failed to read byte from stdin: {}", e));
+                    }
+                    None => {
+                        return Err("Failed to read byte from stdin: EOF".to_string());
+                    }
+                };
             },
             BfCommand::LoopStart(i) => {
                 self.brackets.push(BfCommand::LoopStart(i));
