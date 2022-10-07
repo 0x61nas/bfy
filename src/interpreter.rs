@@ -1,21 +1,22 @@
-use std::io::{Read, Write};
+use std::io::{Write};
 use std::usize;
 use crate::arguments;
 
 pub struct Interpreter {
-    pub array: Vec<u8>,
+    pub cells: Vec<u8>,
     pub pointer: usize,
     pub array_size: usize,
     pub bf_code: String,
-    pub brackets: Vec<BfCommand>,
+    brackets: Vec<BfCommand>,
     pub features: Vec<arguments::Feature>,
 }
+
 impl Interpreter {
     pub fn new(array_size: usize,
                bf_code: Option<String>,
                features: Vec<arguments::Feature>) -> Self {
         Self {
-            array: vec![0; array_size],
+            cells: vec![0; array_size],
             pointer: 0,
             array_size,
             bf_code: bf_code.unwrap_or_else(|| String::new()),
@@ -24,64 +25,106 @@ impl Interpreter {
         }
     }
 
-    pub fn run(&mut self, bf_code: Option<String>) {
-        let mut cells = vec![0u8; bf_arr_size];
-        let mut ptr = 0;
-        let mut brackets = vec![];
+    pub fn run(&mut self, bf_code: Option<String>) -> Result<u32, (String, u32)> {
+        let bf_code = match bf_code {
+            Some(bf_code) => {
+                self.bf_code.push_str(&*bf_code);
+                bf_code
+            }
+            None => self.bf_code.clone()
+        };
 
+        match self.run_brainfuck_code(&bf_code) {
+            Ok(_) => Ok(0),
+            Err(e) => Err((e, 1)),
+        }
+    }
+
+    // +[>++<-]
+    fn iterate(&mut self, code: String) -> Result<(), String> {
+        while self.cells[self.pointer] != 0 {
+            self.run_brainfuck_code(&code)?;
+        }
+        Ok(())
+    }
+
+
+    fn run_brainfuck_code(&mut self, bf_code: &str) -> Result<(), String> {
         for (i, ch) in bf_code.chars().enumerate() {
-            trace!("Current character: {}", ch);
-            trace!("Current pointer: {}", ptr);
-            trace!("Current cell: {}", cells[ptr]);
-
             match BfCommand::from_char(ch, i) {
                 Some(cmd) => {
                     trace!("Executing command: {:?}", cmd);
-                    match cmd {
-                        BfCommand::IncPtr => {
-                            if ptr == bf_arr_size - 1 {
-                                eprintln!("Error: pointer out of bounds");
-                            } else {
-                                ptr += 1;
-                            }
-                        },
-                        BfCommand::DecPtr => ptr -= 1,
-                        BfCommand::IncVal => {
-                            cells[ptr] += 1
-                        },
-                        BfCommand::DecVal => cells[ptr] -= 1,
-                        BfCommand::Print => {
-                            trace!("Printing value: {}", cells[ptr]);
-                            println!("{}", cells[ptr]);
-                            std::io::stdout().flush().unwrap();
-                        },
-                        BfCommand::Read => cells[ptr] = std::io::stdin()
-                            .bytes().next().unwrap().unwrap() as u8,
-                        BfCommand::LoopStart(index) => brackets.push(cmd),
-                        BfCommand::LoopEnd => {
-                            if cells[ptr] != 0 {
-                                let i = brackets
-                                    .iter()
-                                    .map(|cmd| match cmd {
-                                        BfCommand::LoopStart(index) => *index,
-                                        _ => unreachable!()
-                                    })
-                                    .last();
-                                brackets.truncate(i);
-                                ptr = index;
-                            } else {
-                                brackets.pop();
-                            }
-                        }
-                    }
-                },
+                    self.execute(cmd)?
+                }
                 None => {
-                    trace!("Ignoring character: {}", ch);
-                } // Ignore unknown characters
+                    trace!("Skipping character: {}", ch);
+                }
             }
         }
+        Ok(())
+    }
+
+    fn execute(&mut self, cmd: BfCommand) -> Result<(), String> {
+        match cmd {
+            BfCommand::IncPtr => {
+                self.pointer += 1;
+                if self.pointer >= self.array_size {
+                    if self.features.contains(&arguments::Feature::ReversePointer) {
+                        self.pointer = 0;
+                    } else {
+                        return Err(format!("Pointer out of bounds: {}", self.pointer));
+                    }
+                }
+            }
+            BfCommand::DecPtr => {
+                if self.pointer == 0 {
+                    if self.features.contains(&arguments::Feature::ReversePointer) {
+                        self.pointer = self.array_size - 1;
+                    } else {
+                        return Err(format!("Pointer out of bounds: {}", self.pointer));
+                    }
+                } else {
+                    self.pointer -= 1;
+                }
+            },
+            BfCommand::IncVal => {
+                self.cells[self.pointer] = self.cells[self.pointer].wrapping_add(1);
+            },
+            BfCommand::DecVal => {
+                self.cells[self.pointer] = self.cells[self.pointer].wrapping_sub(1);
+            },
+            BfCommand::Print => {
+                print!("{}", self.cells[self.pointer] as char);
+                std::io::stdout().flush().unwrap();
+            },
+            BfCommand::Read => {
+                let mut input = String::new();
+                // TODO: Handle errors, and read only one byte
+                std::io::stdin().read_line(&mut input).unwrap();
+                self.cells[self.pointer] = input.chars().next().unwrap() as u8;
+            },
+            BfCommand::LoopStart(i) => {
+                self.brackets.push(BfCommand::LoopStart(i));
+            },
+            BfCommand::LoopEnd(i) => {
+                let open_bracket = self.brackets.pop();
+                match open_bracket {
+                    Some(BfCommand::LoopStart(j)) => {
+                        if self.cells[self.pointer] != 0 {
+                            let code = self.bf_code[j..i].to_string();
+                            self.iterate(code)?;
+                        }
+                    },
+                    _ => {
+                        return Err(format!("Unmatched closing bracket at position: {}", i));
+                    }
+                }
+            }
+        }
+        Ok(())
     }
 }
+
 
 #[derive(Debug, PartialEq)]
 enum BfCommand {
@@ -92,7 +135,7 @@ enum BfCommand {
     Print,
     Read,
     LoopStart(usize),
-    LoopEnd,
+    LoopEnd(usize),
 }
 
 impl BfCommand {
@@ -105,7 +148,7 @@ impl BfCommand {
             '.' => Some(BfCommand::Print),
             ',' => Some(BfCommand::Read),
             '[' => Some(BfCommand::LoopStart(index)),
-            ']' => Some(BfCommand::LoopEnd),
+            ']' => Some(BfCommand::LoopEnd(index)),
             _ => None,
         }
     }

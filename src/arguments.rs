@@ -24,5 +24,4 @@ pub enum Feature {
     /// If the pointer at the end of the array, set the pointer to 0, otherwise increment the pointer.
     /// If the pointer at the beginning of the array, set the pointer to the end of the array, otherwise decrement the pointer.
     ReversePointer,
-
 }

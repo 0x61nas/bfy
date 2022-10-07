@@ -1,4 +1,4 @@
-fn read_brainfuck_code_if_any(source: Option<String>) -> Option<String> {
+pub(crate) fn read_brainfuck_code_if_any(source: &Option<String>) -> Option<String> {
     match source {
         Some(source) => {
             info!("Reading brainfuck source code from file: {}", source);
