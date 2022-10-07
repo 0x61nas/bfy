@@ -1,6 +1,7 @@
 use std::io::{Read, Write};
 use std::usize;
 use crate::arguments;
+use crate::interpreter::error::InterpreterError;
 
 pub struct Interpreter {
     pub cells: Vec<u8>,
@@ -25,7 +26,7 @@ impl Interpreter {
         }
     }
 
-    pub fn run(&mut self, bf_code: Option<String>) -> Result<i32, (String, i32)> {
+    pub fn run(&mut self, bf_code: Option<String>) -> Result<i32, InterpreterError> {
         let bf_code = match bf_code {
             Some(bf_code) => {
                 self.bf_code.push_str(&*bf_code);
@@ -36,12 +37,12 @@ impl Interpreter {
 
         match self.run_brainfuck_code(&bf_code) {
             Ok(_) => Ok(0),
-            Err(e) => Err((e, 1)),
+            Err(e) => Err(e)
         }
     }
 
     // +[>++<-]
-    fn iterate(&mut self, code: String) -> Result<(), String> {
+    fn iterate(&mut self, code: String) -> Result<(), InterpreterError> {
         while self.cells[self.pointer] != 0 {
             self.run_brainfuck_code(&code)?;
         }
@@ -49,7 +50,7 @@ impl Interpreter {
     }
 
 
-    fn run_brainfuck_code(&mut self, bf_code: &str) -> Result<(), String> {
+    fn run_brainfuck_code(&mut self, bf_code: &str) -> Result<(), error::InterpreterError> {
         for (i, ch) in bf_code.chars().enumerate() {
             match BfCommand::from_char(ch, i) {
                 Some(cmd) => {
@@ -64,7 +65,7 @@ impl Interpreter {
         Ok(())
     }
 
-    fn execute(&mut self, cmd: BfCommand) -> Result<(), String> {
+    fn execute(&mut self, cmd: BfCommand) -> Result<(), error::InterpreterError> {
         match cmd {
             BfCommand::IncPtr => {
                 self.pointer += 1;
@@ -72,7 +73,10 @@ impl Interpreter {
                     if self.features.contains(&arguments::Feature::ReversePointer) {
                         self.pointer = 0;
                     } else {
-                        return Err(format!("Pointer out of bounds: {}", self.pointer));
+                        return Err(error::InterpreterError::new(
+                            format!("Pointer out of bounds {}", self.pointer),
+                            11,
+                        ));
                     }
                 }
             }
@@ -81,7 +85,10 @@ impl Interpreter {
                     if self.features.contains(&arguments::Feature::ReversePointer) {
                         self.pointer = self.array_size - 1;
                     } else {
-                        return Err(format!("Pointer out of bounds: {}", self.pointer));
+                        return Err(error::InterpreterError::new(
+                            format!("Pointer out of bounds {}", self.pointer),
+                            11,
+                        ));
                     }
                 } else {
                     self.pointer -= 1;
@@ -101,10 +108,16 @@ impl Interpreter {
                 self.cells[self.pointer] = match std::io::stdin().bytes().next() {
                     Some(Ok(byte)) => byte,
                     Some(Err(e)) => {
-                        return Err(format!("Failed to read byte from stdin: {}", e));
+                        return Err(error::InterpreterError::new(
+                            format!("Failed to read byte from stdin: {}", e),
+                            12,
+                        ));
                     }
                     None => {
-                        return Err("Failed to read byte from stdin: EOF".to_string());
+                        return Err(InterpreterError::new(
+                            "Failed to read byte from stdin: no bytes available".to_string(),
+                            13,
+                        ));
                     }
                 };
             },
@@ -121,7 +134,10 @@ impl Interpreter {
                         }
                     },
                     _ => {
-                        return Err(format!("Unmatched closing bracket at position: {}", i));
+                        return Err(error::InterpreterError::new(
+                            format!("Unmatched closing bracket at position {}", i),
+                            14,
+                        ));
                     }
                 }
             }
@@ -165,25 +181,25 @@ impl BfCommand {
     }
 }
 
-mod error {
+pub mod error {
     use std::fmt::{Debug, Formatter};
 
-    struct InterpreterError {
+    pub struct InterpreterError {
         message: String,
-        code: i32,
+        pub(crate) code: i32,
     }
 
     impl InterpreterError {
-        fn new(message: String, code: i32) -> Self {
+        pub fn new(message: String, code: i32) -> Self {
             Self {
-                message,
+                message: message.to_string(),
                 code,
             }
         }
     }
 
     impl std::fmt::Display for InterpreterError {
-        fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
             write!(f, "{}", self.message)
         }
     }

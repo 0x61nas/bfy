@@ -34,9 +34,9 @@ fn main() {
                     println!("Exiting with code: {exit_code}");
                     std::process::exit(0);
                 }
-                Err((e, code)) => {
+                Err(e) => {
                     error!("Failed to run brainfuck source code from file: {}", e);
-                    std::process::exit(code);
+                    std::process::exit(e.code);
                 }
             }
         }

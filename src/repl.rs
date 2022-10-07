@@ -38,7 +38,7 @@ impl Repl {
                     Ok(_) => {
                         info!("Successfully ran brainfuck source code from REPL");
                     }
-                    Err((e, _)) => {
+                    Err(e) => {
                         error!("Failed to run brainfuck source code from REPL: {}", e);
                     }
                 }
@@ -102,7 +102,7 @@ impl Repl {
                                         Ok(_) => {
                                             info!("Successfully ran brainfuck source code from REPL");
                                         }
-                                        Err((e, _)) => {
+                                        Err(e) => {
                                             error!("Failed to run brainfuck source code from REPL: {}", e);
                                         }
                                     }
