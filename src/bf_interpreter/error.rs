@@ -1,5 +1,6 @@
 use std::fmt::{Debug, Formatter, Display};
 
+#[derive(PartialEq)]
 pub struct InterpreterError {
     message: String,
     pub code: i32,
@@ -33,8 +34,7 @@ impl std::error::Error for InterpreterError {
 }
 
 pub enum InterpreterErrorKind {
-    PointerOutOfBounds(usize),
-    // takes pointer value
+    PointerOutOfBounds(usize), // takes pointer value
     ValueOutOfBounds,
     ByteReadError(std::io::Error),
     ReadError,
@@ -67,5 +67,47 @@ impl Display for InterpreterErrorKind {
             InterpreterErrorKind::ReadError => write!(f, "Failed to read byte from stdin: no bytes available"),
             InterpreterErrorKind::UnmatchedClosingBracket(pos) => write!(f, "Unmatched closing bracket at position {}", pos),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use pretty_assertions::assert_eq; // for testing only
+
+    #[test]
+    fn test_error_kind_display() {
+        let error = InterpreterErrorKind::PointerOutOfBounds(10).to_error();
+        assert_eq!(error.to_string(), "Pointer out of bounds 10");
+        assert_eq!(error.code, 11);
+
+        let error = InterpreterErrorKind::ValueOutOfBounds.to_error();
+        assert_eq!(error.to_string(), "Value out of bounds");
+        assert_eq!(error.code, 12);
+
+        let error = InterpreterErrorKind::ByteReadError(std::io::Error::new(std::io::ErrorKind::Other, "test")).to_error();
+        assert_eq!(error.to_string(), "Failed to read byte from stdin: no bytes available: test");
+        assert_eq!(error.code, 13);
+
+        let error = InterpreterErrorKind::ReadError.to_error();
+        assert_eq!(error.to_string(), "Failed to read byte from stdin: no bytes available");
+        assert_eq!(error.code, 14);
+
+        let error = InterpreterErrorKind::UnmatchedClosingBracket(10).to_error();
+        assert_eq!(error.to_string(), "Unmatched closing bracket at position 10");
+        assert_eq!(error.code, 15);
+    }
+
+    #[test]
+    fn test_error_display() {
+        let error = InterpreterError::new("test".to_string(), 10);
+        assert_eq!(error.to_string(), "test");
+        assert_eq!(error.code, 10);
+    }
+
+    #[test]
+    fn test_error_debug() {
+        let error = InterpreterError::new("test".to_string(), 10);
+        assert_eq!(format!("{:?}", error), "test, code: 10");
     }
 }

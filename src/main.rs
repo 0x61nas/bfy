@@ -2,9 +2,9 @@ mod arguments;
 mod repl;
 mod utils;
 mod bf_interpreter;
+mod mode;
 
 use clap::Parser;
-
 extern crate pretty_env_logger;
 #[macro_use]
 extern crate log;
@@ -24,6 +24,10 @@ fn main() {
         args.array_size,
         utils::read_brainfuck_code_if_any(&args.source),
         args.features.unwrap_or_else(|| vec![]),
+        match args.source {
+            Some(_) => mode::RunMode::Execute,
+            None => mode::RunMode::Repl
+        },
     );
 
     match args.source {
