@@ -7,7 +7,16 @@ license = "MIT"
 description = "Brainfu*k interpreter and REPL written in Rust"
 repository = "https://github.com/anas-elgarhy/bf-interpreter"
 readme = "README.md"
-keywords = ["brainfuck", "interpreter", "repl"]
+keywords = [
+    "brainfuck",
+    "interpreter",
+    "repl",
+    "bf",
+    "bf-interpreter",
+    "bf-repl",
+    "brainfuck-interpreter",
+    "brainfuck-repl",
+]
 categories = ["command-line-utilities"]
 documentation = "https://docs.rs/bf-interpreter"
 homepage = "https://github.com/anas-elgarhy/bf-interpreter"

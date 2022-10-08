@@ -30,12 +30,15 @@ fn main() {
             info!("Running brainfuck source code from file: {}", source);
             match interpreter.run(None) {
                 Ok(exit_code) => {
-                    println!(
-                        "Successfully ran brainfuck source code from file: {}",
-                        source
-                    );
-                    println!("Exiting with code: {exit_code}");
-                    std::process::exit(0);
+                    info!("Finished running brainfuck source code from file: {}", source);
+                    if !args.without_tiles {
+                        println!(
+                            "Successfully ran brainfuck source code from file: {}",
+                            source
+                        );
+                        println!("Exiting with code: {exit_code}");
+                        std::process::exit(0);
+                    }
                 }
                 Err(e) => {
                     error!("Failed to run brainfuck source code from file: {}", e);

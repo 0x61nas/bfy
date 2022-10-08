@@ -11,6 +11,9 @@ pub struct Args {
     /// The brainfuck array size
     #[arg(short, long, default_value = "30000")]
     pub array_size: usize,
+    /// Dont print the tiles (e.g. exit code, file name, etc)
+    #[arg(short, long)]
+    pub without_tiles: bool,
 }
 
 #[derive(Debug, PartialEq, Copy, Clone, ValueEnum)]
