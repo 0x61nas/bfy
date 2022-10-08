@@ -2,6 +2,25 @@
 name = "bf-interpreter"
 version = "0.1.0"
 edition = "2021"
+authors = ["Anas Elgarhy <anas.elgarhy.dev@gmail.com>"]
+license = "MIT OR Apache-2.0"
+description = "Brainfu*k interpreter and REPL written in Rust"
+repository = "https://github.com/anas-elgarhy/bf-interpreter"
+readme = "README.md"
+keywords = ["brainfuck", "interpreter", "repl"]
+categories = ["command-line-utilities"]
+documentation = "https://docs.rs/bf-interpreter"
+homepage = "https://github.com/anas-elgarhy/bf-interpreter"
+include = [
+    "src/**/*",
+    "Cargo.toml",
+    "README.md"
+]
+
+exclude = [
+    "test_code/**/*",
+    "screenshots/**/*"
+]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
