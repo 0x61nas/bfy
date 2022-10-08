@@ -20,7 +20,7 @@ pub struct Args {
 pub enum Feature {
     /// If the value is you want decrement the value and the value is 0, set the value to 255, otherwise decrement the value.
     /// If the value is you want increment the value and the value is 255, set the value to 0, otherwise increment the value.
-    ReverseCounter,
+    ReverseValue,
     /// If the pointer at the end of the array, set the pointer to 0, otherwise increment the pointer.
     /// If the pointer at the beginning of the array, set the pointer to the end of the array, otherwise decrement the pointer.
     ReversePointer,

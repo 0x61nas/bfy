@@ -1,4 +1,4 @@
-use crate::interpreter::Interpreter;
+use crate::bf_interpreter::interpreter::Interpreter;
 use std::io::Write;
 
 struct Repl {
@@ -50,7 +50,7 @@ impl Repl {
         let mut cmd = input.split_whitespace();
         match cmd.next() {
             Some(repl_cmd) => {
-                match repl_cmd {
+                match repl_cmd.get(1..).unwrap_or("") {
                     "fuck" => {
                         println!("Bye bye :D");
                         std::process::exit(0);
@@ -63,6 +63,13 @@ impl Repl {
                     }
                     "pointer" | "p" => {
                         println!("Current pointer: {}", self.interpreter.pointer);
+                    }
+                    "pointer_value" | "pv" => {
+                        println!(
+                            "Current pointer value: {} = \'{}\' (char)",
+                            self.interpreter.cells[self.interpreter.pointer],
+                            self.interpreter.cells[self.interpreter.pointer] as char
+                        );
                     }
                     "history" | "h" => {
                         println!("History:");
@@ -122,10 +129,11 @@ impl Repl {
                         println!("!array, !a: print the current array");
                         println!("!array_size, !as: print the current array size");
                         println!("!pointer, !p: print the current pointer value");
+                        println!("!pointer_value, !pv: print the current pointer value");
                         println!("!history, !h: print the history of the commands");
                         println!("!save, !s: save the history to a file");
                         println!("!load, !l: load the history from a file");
-                        println!("!reset, !r: reset the interpreter");
+                        println!("!reset, !r: reset the bf_interpreter");
                         println!("!help: show this fu*king help message");
                         println!("!fuck: exit the REPL mode");
                     }
@@ -141,7 +149,7 @@ pub fn start(interpreter: Interpreter) {
     info!("Entering REPL mode");
     println!("Welcome to the brainfuck REPL mode! :)");
     println!(
-        "Brainfuck interpreter v {}\nBy {}",
+        "Brainfuck bf_interpreter v {}\nBy {}",
         clap::crate_version!(),
         clap::crate_authors!()
     );

@@ -1,7 +1,7 @@
 mod arguments;
-mod interpreter;
 mod repl;
 mod utils;
+mod bf_interpreter;
 
 use clap::Parser;
 
@@ -10,6 +10,7 @@ extern crate pretty_env_logger;
 extern crate log;
 
 use arguments::Args;
+use bf_interpreter::interpreter::Interpreter;
 
 fn main() {
     pretty_env_logger::init();
@@ -18,8 +19,8 @@ fn main() {
     let args = Args::parse();
     info!("Parsed command line arguments: {:?}", args);
 
-    info!("Initializing interpreter");
-    let mut interpreter = interpreter::Interpreter::new(
+    info!("Initializing bf_interpreter");
+    let mut interpreter = Interpreter::new(
         args.array_size,
         utils::read_brainfuck_code_if_any(&args.source),
         args.features.unwrap_or_else(|| vec![]),

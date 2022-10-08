@@ -1,5 +1,5 @@
 use crate::arguments;
-use crate::interpreter::error::InterpreterError;
+use crate::bf_interpreter::error::{InterpreterError, InterpreterErrorKind};
 use std::io::{Read, Write};
 use std::usize;
 
@@ -74,10 +74,7 @@ impl Interpreter {
                     if self.features.contains(&arguments::Feature::ReversePointer) {
                         self.pointer = 0;
                     } else {
-                        return Err(InterpreterError::new(
-                            format!("Pointer out of bounds {}", self.pointer),
-                            11,
-                        ));
+                        return Err(InterpreterErrorKind::PointerOutOfBounds(self.pointer).to_error())
                     }
                 }
             }
@@ -86,20 +83,33 @@ impl Interpreter {
                     if self.features.contains(&arguments::Feature::ReversePointer) {
                         self.pointer = self.array_size - 1;
                     } else {
-                        return Err(InterpreterError::new(
-                            format!("Pointer out of bounds {}", self.pointer),
-                            11,
-                        ));
+                        return Err(InterpreterErrorKind::PointerOutOfBounds(self.pointer).to_error());
                     }
                 } else {
                     self.pointer -= 1;
                 }
             }
             BfCommand::IncVal => {
-                self.cells[self.pointer] = self.cells[self.pointer].wrapping_add(1);
+                if self.cells[self.pointer] == 255 {
+                    if self.features.contains(&arguments::Feature::ReverseValue) {
+                        self.cells[self.pointer] = 0;
+                    } else {
+                        return Err(InterpreterErrorKind::ValueOutOfBounds.to_error());
+                    }
+                } else {
+                    self.cells[self.pointer] += 1;
+                }
             }
             BfCommand::DecVal => {
-                self.cells[self.pointer] = self.cells[self.pointer].wrapping_sub(1);
+                if self.cells[self.pointer] == 0 {
+                    if self.features.contains(&arguments::Feature::ReverseValue) {
+                        self.cells[self.pointer] = 255;
+                    } else {
+                        return Err(InterpreterErrorKind::ValueOutOfBounds.to_error());
+                    }
+                } else {
+                    self.cells[self.pointer] -= 1;
+                }
             }
             BfCommand::Print => {
                 print!("{}", self.cells[self.pointer] as char);
@@ -109,16 +119,10 @@ impl Interpreter {
                 self.cells[self.pointer] = match std::io::stdin().bytes().next() {
                     Some(Ok(byte)) => byte,
                     Some(Err(e)) => {
-                        return Err(InterpreterError::new(
-                            format!("Failed to read byte from stdin: {}", e),
-                            12,
-                        ));
+                        return Err(InterpreterErrorKind::ByteReadError(e).to_error());
                     }
                     None => {
-                        return Err(InterpreterError::new(
-                            "Failed to read byte from stdin: no bytes available".to_string(),
-                            13,
-                        ));
+                        return Err(InterpreterErrorKind::ReadError.to_error());
                     }
                 };
             }
@@ -137,7 +141,7 @@ impl Interpreter {
                     _ => {
                         return Err(InterpreterError::new(
                             format!("Unmatched closing bracket at position {}", i),
-                            14,
+                            15,
                         ));
                     }
                 }
@@ -181,38 +185,3 @@ impl BfCommand {
     }
 }
 
-pub mod error {
-    use std::fmt::{Debug, Formatter};
-
-    pub struct InterpreterError {
-        message: String,
-        pub(crate) code: i32,
-    }
-
-    impl InterpreterError {
-        pub fn new(message: String, code: i32) -> Self {
-            Self {
-                message: message.to_string(),
-                code,
-            }
-        }
-    }
-
-    impl std::fmt::Display for InterpreterError {
-        fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
-            write!(f, "{}", self.message)
-        }
-    }
-
-    impl Debug for InterpreterError {
-        fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-            write!(f, "{}, code: {}", self.message, self.code)
-        }
-    }
-
-    impl std::error::Error for InterpreterError {
-        fn description(&self) -> &str {
-            &self.message
-        }
-    }
-}
