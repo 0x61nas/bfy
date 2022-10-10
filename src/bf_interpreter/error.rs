@@ -36,9 +36,10 @@ impl std::error::Error for InterpreterError {
 pub enum InterpreterErrorKind {
     PointerOutOfBounds(usize), // takes pointer value
     ValueOutOfBounds,
-    ByteReadError(std::io::Error),
-    ReadError,
-    UnmatchedClosingBracket(usize), // takes position
+    IoError(std::io::Error),
+    FlushError(std::io::Error),
+    UnmatchedBracket,
+    InvalidUtf8,
 }
 
 impl InterpreterErrorKind {
@@ -50,9 +51,10 @@ impl InterpreterErrorKind {
         match self {
             InterpreterErrorKind::PointerOutOfBounds(_) => 11,
             InterpreterErrorKind::ValueOutOfBounds => 12,
-            InterpreterErrorKind::ByteReadError(_) => 13,
-            InterpreterErrorKind::ReadError => 14,
-            InterpreterErrorKind::UnmatchedClosingBracket(_) => 15,
+            InterpreterErrorKind::IoError(_) => 13,
+            InterpreterErrorKind::FlushError(_) => 14,
+            InterpreterErrorKind::UnmatchedBracket => 15,
+            InterpreterErrorKind::InvalidUtf8 => 16,
         }
     }
 }
@@ -62,10 +64,11 @@ impl Display for InterpreterErrorKind {
         match self {
             InterpreterErrorKind::PointerOutOfBounds(pointer) => write!(f, "Pointer out of bounds {}", pointer),
             InterpreterErrorKind::ValueOutOfBounds => write!(f, "Value out of bounds"),
-            InterpreterErrorKind::ByteReadError(error) =>
+            InterpreterErrorKind::IoError(error) =>
                 write!(f, "Failed to read byte from stdin: no bytes available: {}", error),
-            InterpreterErrorKind::ReadError => write!(f, "Failed to read byte from stdin: no bytes available"),
-            InterpreterErrorKind::UnmatchedClosingBracket(pos) => write!(f, "Unmatched closing bracket at position {}", pos),
+            InterpreterErrorKind::FlushError(e) => write!(f, "Failed to flush stdout: {}", e),
+            InterpreterErrorKind::UnmatchedBracket => write!(f, "Unmatched bracket"),
+            InterpreterErrorKind::InvalidUtf8 => write!(f, "Invalid utf8"),
         }
     }
 }
@@ -85,17 +88,21 @@ mod tests {
         assert_eq!(error.to_string(), "Value out of bounds");
         assert_eq!(error.code, 12);
 
-        let error = InterpreterErrorKind::ByteReadError(std::io::Error::new(std::io::ErrorKind::Other, "test")).to_error();
+        let error = InterpreterErrorKind::IoError(std::io::Error::new(std::io::ErrorKind::Other, "test")).to_error();
         assert_eq!(error.to_string(), "Failed to read byte from stdin: no bytes available: test");
         assert_eq!(error.code, 13);
 
-        let error = InterpreterErrorKind::ReadError.to_error();
+        /*let error = InterpreterErrorKind::FlushError(e).to_error();
         assert_eq!(error.to_string(), "Failed to read byte from stdin: no bytes available");
-        assert_eq!(error.code, 14);
+        assert_eq!(error.code, 14);*/
 
-        let error = InterpreterErrorKind::UnmatchedClosingBracket(10).to_error();
-        assert_eq!(error.to_string(), "Unmatched closing bracket at position 10");
+        let error = InterpreterErrorKind::UnmatchedBracket.to_error();
+        assert_eq!(error.to_string(), "Unmatched bracket");
         assert_eq!(error.code, 15);
+
+        let error = InterpreterErrorKind::InvalidUtf8.to_error();
+        assert_eq!(error.to_string(), "Invalid utf8");
+        assert_eq!(error.code, 16);
     }
 
     #[test]

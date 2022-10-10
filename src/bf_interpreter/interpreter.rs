@@ -1,4 +1,4 @@
-use crate::{arguments, mode};
+use crate::arguments;
 use crate::bf_interpreter::error::{InterpreterError, InterpreterErrorKind};
 use std::io::{Read, Write};
 use std::{char, usize, vec};
@@ -7,203 +7,204 @@ pub struct Interpreter {
     pub cells: Vec<u8>,
     pub pointer: usize,
     pub array_size: usize,
-    pub bf_code: Vec<char>,
+    pub bf_commands: Vec<BfCommand>,
     brackets: Vec<BfCommand>,
     pub features: Vec<arguments::Feature>,
-    mode: mode::RunMode,
 }
 
 impl Interpreter {
     pub fn new(
         array_size: usize,
-        bf_code: Option<String>,
         features: Vec<arguments::Feature>,
-        run_mode: mode::RunMode
     ) -> Self {
-        trace!("Run mode{run_mode:?}");
         Self {
             cells: vec![0; array_size],
             pointer: 0,
             array_size,
-            bf_code: bf_code.unwrap_or_else(|| String::new()).chars().collect(),
+            bf_commands: vec![],
             brackets: Vec::new(),
             features,
-            mode: run_mode,
         }
     }
 
-    pub fn run(&mut self, bf_code: Option<String>) -> Result<i32, InterpreterError> {
-        let bf_code = match bf_code {
-            Some(bf_code) => {
-                bf_code.chars().collect()
-            }
-            None => self.bf_code.clone(),
-        };
+    pub fn run(&mut self, bf_code: String) -> Result<i32, InterpreterError> {
+        self.bf_commands = to_bf_commands(bf_code.chars().collect())?;
 
-        match self.run_brainfuck_code(bf_code, false) {
+        match self.run_brainfuck_code(&self.bf_commands.clone()) {
             Ok(_) => Ok(0),
             Err(e) => Err(e),
         }
     }
 
+
     // +[>++<-]
-    fn iterate(&mut self, code: Vec<char>) -> Result<(), InterpreterError> {
+    fn iterate(&mut self, code: &Vec<BfCommand>) -> Result<(), InterpreterError> {
         trace!("Iterate: {:?}", code);
         while self.cells[self.pointer] != 0 {
-            self.run_brainfuck_code(code.clone(), true)?;
+            self.run_brainfuck_code(code)?;
         }
         Ok(())
     }
 
-    fn run_brainfuck_code(&mut self, bf_code: Vec<char>, from_loop: bool) -> Result<(), InterpreterError> {
-        let mut removed_num = 0_usize;
-        for (i, ch) in bf_code.iter().enumerate() {
-            match BfCommand::from_char(ch, i - removed_num) {
-                Some(cmd) => {
-                    trace!("Executing command: {:?}", cmd);
-                    self.execute(cmd)?;
+    fn run_brainfuck_code(&mut self, bf_code: &Vec<BfCommand>) -> Result<(), InterpreterError> {
+        for command in bf_code {
+            match command {
+                BfCommand::IncPtr => self.increment_pointer()?,
+                BfCommand::DecPtr => self.decrement_pointer()?,
+                BfCommand::IncVal => self.increment_value()?,
+                BfCommand::DecVal => self.decrement_value()?,
+                BfCommand::Print => self.output_value()?,
+                BfCommand::Read => self.input_value()?,
+                BfCommand::Loop(loop_body) => self.iterate(loop_body)?,
+            }
+        }
 
-                    // Push the char to the bf_code vector if isn't from loop and we run in REPL mode
-                    if !from_loop && self.mode == mode::RunMode::Repl {
-                        self.bf_code.push(ch.clone());
-                    }
-                }
-                None => {
-                    trace!("Skipping character: \'{}\'", ch);
-                    removed_num += 1;
-                }
+        Ok(())
+    }
+
+    fn increment_pointer(&mut self) -> Result<(), InterpreterError> {
+        trace!("Increment pointer");
+        self.pointer += 1;
+        if self.pointer >= self.array_size {
+            if self.features.contains(&arguments::Feature::ReversePointer) {
+                self.pointer = 0;
+            } else {
+                return Err(InterpreterErrorKind::PointerOutOfBounds(self.pointer).to_error());
             }
         }
         Ok(())
     }
 
-    fn execute(&mut self, cmd: BfCommand) -> Result<(), InterpreterError> {
-        match cmd {
-            BfCommand::IncPtr => {
-                self.pointer += 1;
-                if self.pointer >= self.array_size {
-                    if self.features.contains(&arguments::Feature::ReversePointer) {
-                        self.pointer = 0;
-                    } else {
-                        return Err(InterpreterErrorKind::PointerOutOfBounds(self.pointer).to_error())
-                    }
-                }
+    fn decrement_pointer(&mut self) -> Result<(), InterpreterError> {
+        trace!("Decrement pointer");
+        if self.pointer == 0 {
+            if self.features.contains(&arguments::Feature::ReversePointer) {
+                self.pointer = self.array_size - 1;
+            } else {
+                return Err(InterpreterErrorKind::PointerOutOfBounds(self.pointer).to_error());
             }
-            BfCommand::DecPtr => {
-                if self.pointer == 0 {
-                    if self.features.contains(&arguments::Feature::ReversePointer) {
-                        self.pointer = self.array_size - 1;
-                    } else {
-                        return Err(InterpreterErrorKind::PointerOutOfBounds(self.pointer).to_error());
-                    }
-                } else {
-                    self.pointer -= 1;
-                }
-            }
-            BfCommand::IncVal => {
-                if self.cells[self.pointer] == 255 {
-                    if self.features.contains(&arguments::Feature::ReverseValue) {
-                        self.cells[self.pointer] = 0;
-                    } else {
-                        return Err(InterpreterErrorKind::ValueOutOfBounds.to_error());
-                    }
-                } else {
-                    self.cells[self.pointer] += 1;
-                }
-            }
-            BfCommand::DecVal => {
-                if self.cells[self.pointer] == 0 {
-                    if self.features.contains(&arguments::Feature::ReverseValue) {
-                        self.cells[self.pointer] = 255;
-                    } else {
-                        return Err(InterpreterErrorKind::ValueOutOfBounds.to_error());
-                    }
-                } else {
-                    self.cells[self.pointer] -= 1;
-                }
-            }
-            BfCommand::Print => {
-                print!("{}", self.cells[self.pointer] as char);
-                std::io::stdout().flush().unwrap();
-            }
-            BfCommand::Read => {
-                self.cells[self.pointer] = match std::io::stdin().bytes().next() {
-                    Some(Ok(byte)) => byte,
-                    Some(Err(e)) => {
-                        return Err(InterpreterErrorKind::ByteReadError(e).to_error());
-                    }
-                    None => {
-                        return Err(InterpreterErrorKind::ReadError.to_error());
-                    }
-                };
-            }
-            BfCommand::LoopStart(i) => {
-                self.brackets.push(BfCommand::LoopStart(i));
-            }
-            BfCommand::LoopEnd(i) => {
-                let open_bracket = self.brackets.pop();
-                match open_bracket {
-                    Some(BfCommand::LoopStart(j)) => {
-                        if self.cells[self.pointer] != 0 {
-                            let start = match &self.mode {
-                                mode::RunMode::Repl if self.bf_code.len() - j >= i =>
-                                    self.bf_code.len() - j - i + 1,
-                                _ => j + 1
-                            };
-                            debug!("bf_code array len: {}", self.bf_code.len());
-                            debug!("start index {}", start);
-                            debug!("bf_code at start: {}", self.bf_code[start]);
-                            debug!("i: {i}, j: {j}");
-                            // debug!("{}", self.bf_code[i]);
-                            let end = match &self.mode {
-                                mode::RunMode::Repl => {
-                                    let mut s = i + start - 2;
-
-                                    if s >= self.bf_code.len() {
-                                        s = s - (self.bf_code.len() - start) + 1;
-                                    }
-
-                                    s
-                                },
-                                mode::RunMode::Execute => i - 1,
-                            };
-                            let range = start..=end;
-                            debug!("{range:?}");
-                            let code = self.bf_code[range].to_vec();
-                            self.iterate(code)?;
-                        }
-                    }
-                    _ => {
-                        return Err(InterpreterErrorKind::UnmatchedClosingBracket(i).to_error());
-                    }
-                }
-            }
+        } else {
+            self.pointer -= 1;
         }
         Ok(())
+    }
+
+    fn increment_value(&mut self) -> Result<(), InterpreterError> {
+        trace!("Increment value");
+        if self.cells[self.pointer] == 255 {
+            if !self.features.contains(&arguments::Feature::NoReverseValue) {
+                self.cells[self.pointer] = 0;
+            } else {
+                return Err(InterpreterErrorKind::ValueOutOfBounds.to_error());
+            }
+        } else {
+            self.cells[self.pointer] += 1;
+        }
+        Ok(())
+    }
+
+    fn decrement_value(&mut self) -> Result<(), InterpreterError> {
+        trace!("Decrement value");
+        if self.cells[self.pointer] == 0 {
+            if !self.features.contains(&arguments::Feature::NoReverseValue) {
+                self.cells[self.pointer] = 255;
+            } else {
+                return Err(InterpreterErrorKind::ValueOutOfBounds.to_error());
+            }
+        } else {
+            self.cells[self.pointer] -= 1;
+        }
+        Ok(())
+    }
+
+    fn output_value(&mut self) -> Result<(), InterpreterError> {
+        trace!("Output value");
+
+        if self.features.contains(&arguments::Feature::AllowUtf8) {
+            let c = char::from_u32(self.cells[self.pointer] as u32);
+            match c {
+                Some(c) => print!("{}", c),
+                None => return Err(InterpreterErrorKind::InvalidUtf8.to_error()),
+            }
+        } else {
+            print!("{}", self.cells[self.pointer] as char);
+        }
+        match std::io::stdout().flush() {
+            Ok(_) => Ok(()),
+            Err(e) => Err(InterpreterErrorKind::FlushError(e).to_error()),
+        }
+    }
+
+    fn input_value(&mut self) -> Result<(), InterpreterError> {
+        trace!("Input value");
+        let mut input = [0; 1];
+        match std::io::stdin().read_exact(&mut input) {
+            Ok(_) => {
+                self.cells[self.pointer] = input[0];
+                Ok(())
+            }
+            Err(e) => Err(InterpreterErrorKind::IoError(e).to_error()),
+        }
     }
 
     pub fn reset(&mut self) {
         self.cells = vec![0; self.array_size];
         self.pointer = 0;
         self.brackets = Vec::new();
-        self.bf_code = Vec::new();
+        self.bf_commands = Vec::new();
     }
 }
 
-#[derive(Debug, PartialEq)]
-enum BfCommand {
+#[derive(Debug, PartialEq, Clone)]
+pub enum BfCommand {
     IncPtr,
     DecPtr,
     IncVal,
     DecVal,
     Print,
     Read,
-    LoopStart(usize),
-    LoopEnd(usize),
+    Loop(Vec<BfCommand>),
+}
+
+fn to_bf_commands(bf_code: Vec<char>) -> Result<Vec<BfCommand>, InterpreterError> {
+    let mut bf_commands = Vec::new();
+    let mut i = 0;
+    while i < bf_code.len() {
+        match bf_code[i] {
+            '[' => {
+                let mut bracket_count = 1;
+                let mut j = i + 1;
+                while j < bf_code.len() {
+                    match bf_code[j] {
+                        '[' => bracket_count += 1,
+                        ']' => bracket_count -= 1,
+                        _ => (),
+                    }
+                    if bracket_count == 0 {
+                        break;
+                    }
+                    j += 1;
+                }
+                if bracket_count != 0 {
+                    return Err(InterpreterErrorKind::UnmatchedBracket.to_error());
+                }
+                bf_commands.push(BfCommand::Loop(to_bf_commands(bf_code[i + 1..j].to_vec())?));
+                i = j;
+            }
+            _ => {
+                match BfCommand::from(bf_code[i]) {
+                    Some(command) => bf_commands.push(command),
+                    None => (),
+                }
+            },
+        }
+        i += 1;
+    }
+    Ok(bf_commands)
 }
 
 impl BfCommand {
-    fn from_char(c: &char, index: usize) -> Option<BfCommand> {
+    fn from(c: char) -> Option<Self> {
         match c {
             '>' => Some(BfCommand::IncPtr),
             '<' => Some(BfCommand::DecPtr),
@@ -211,8 +212,6 @@ impl BfCommand {
             '-' => Some(BfCommand::DecVal),
             '.' => Some(BfCommand::Print),
             ',' => Some(BfCommand::Read),
-            '[' => Some(BfCommand::LoopStart(index)),
-            ']' => Some(BfCommand::LoopEnd(index)),
             _ => None,
         }
     }
@@ -221,91 +220,162 @@ impl BfCommand {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::mode::RunMode;
-    use pretty_assertions::assert_eq;
-    use crate::utils; // for testing only
+    use pretty_assertions::assert_eq; // for testing only
+    use crate::utils;
 
     #[test]
     fn print_h_combine_repl() {
         let mut interpreter = Interpreter::new(
             30000,
-            None,
             vec![],
-            RunMode::Repl
         );
 
-        assert_eq!(interpreter.run(None), Ok(0));
+        assert_eq!(interpreter.run(String::from(">+++++++++[<++++ ++++>-]<.")), Ok(0));
 
-        assert_eq!(interpreter.run(Some(String::from(">+++++++++[<++++ ++++>-]<."))), Ok(0));
+        println!();
     }
+
     #[test]
     fn print_h_repl() {
         let mut interpreter = Interpreter::new(
             30000,
-            None,
             vec![],
-            RunMode::Repl
         );
 
-        assert_eq!(interpreter.run(None), Ok(0));
+        assert_eq!(interpreter.run(String::from(">+++++++++")), Ok(0));
+        assert_eq!(interpreter.run(String::from("[<++++ ++++>-]<.")), Ok(0));
 
-        assert_eq!(interpreter.run(Some(String::from(">+++++++++"))), Ok(0));
-        assert_eq!(interpreter.run(Some(String::from("[<++++ ++++>-]<."))), Ok(0));
+        println!();
     }
+
+    #[test]
+    fn nested_loop_level_1_combine() {
+        let mut interpreter = Interpreter::new(
+            5,
+            vec![],
+        );
+
+        assert_eq!(interpreter.run(String::from("++[>++[>+<-]<-]")), Ok(0));
+        assert_eq!(interpreter.cells[2], 4);
+
+        println!();
+    }
+
+
 
     #[test]
     fn execute_hello_world_from_file() {
         let mut interpreter = Interpreter::new(
             30000,
-            utils::read_brainfuck_code_if_any(&Some(String::from("test_code/hello_world.bf"))),
             vec![],
-            RunMode::Execute
         );
 
-        assert_eq!(interpreter.run(None), Ok(0));
+
+        println!();
+
+        assert_eq!(interpreter.run(
+            utils::read_brainfuck_code(
+                &String::from("test_code/hello_world.bf"))), Ok(0));
     }
 
     #[test]
     fn execute_print_hi_from_file() {
         let mut interpreter = Interpreter::new(
             30000,
-            utils::read_brainfuck_code_if_any(&Some(String::from("test_code/print_hi.bf"))),
             vec![],
-            RunMode::Execute
         );
 
-        assert_eq!(interpreter.run(None), Ok(0));
+        println!();
+
+        assert_eq!(interpreter.run(
+            utils::read_brainfuck_code(&String::from("test_code/print_hi.bf"))), Ok(0));
     }
 
     #[test]
     fn execute_print_hi_yooo_from_file() {
         let mut interpreter = Interpreter::new(
             30000,
-            utils::read_brainfuck_code_if_any(&Some(String::from("test_code/print_hi_yooo.bf"))),
             vec![],
-            RunMode::Execute
         );
 
-        assert_eq!(interpreter.run(None), Ok(0));
+        println!();
+
+        assert_eq!(interpreter.run(
+            utils::read_brainfuck_code(&String::from("test_code/print_hi_yooo.bf"))),
+                   Ok(0));
+    }
+
+    #[test]
+    fn execute_print_my_first_name_from_formatted_file() {
+        let mut interpreter = Interpreter::new(
+            30000,
+            vec![],
+        );
+
+        println!();
+
+        assert_eq!(interpreter.run(
+            utils::read_brainfuck_code(&String::from("test_code/print_my_first_name_formatted.bf"))),
+                   Ok(0));
+    }
+
+    #[test]
+    fn execute_print_my_first_name_from_file() {
+        let mut interpreter = Interpreter::new(
+            30000,
+            vec![],
+        );
+
+        println!();
+
+        assert_eq!(interpreter.run(
+            utils::read_brainfuck_code(&String::from("test_code/print_my_first_name.bf"))),
+                   Ok(0));
+    }
+
+    #[test]
+    fn execute_print_my_first_name_and_last_name_from_formatted_file() {
+        let mut interpreter = Interpreter::new(
+            30000,
+            vec![],
+        );
+
+        println!();
+
+        assert_eq!(interpreter.run(
+            utils::read_brainfuck_code(
+                &String::from("test_code/print_my_first_name_and_last_name_formatted.bf"))),
+                   Ok(0));
+    }
+
+    #[test]
+    fn execute_print_my_first_name_and_last_name_from_file() {
+        let mut interpreter = Interpreter::new(
+            30000,
+            vec![],
+        );
+
+        println!();
+
+        assert_eq!(interpreter.run(utils::read_brainfuck_code(
+            &String::from("test_code/print_my_first_name_and_last_name.bf"))),
+                   Ok(0));
     }
 
     #[test]
     fn reset() {
         let mut interpreter = Interpreter::new(
             30000,
-            None,
             vec![],
-            RunMode::Repl
         );
 
-        assert_eq!(interpreter.run(None), Ok(0));
 
-        assert_eq!(interpreter.run(Some(String::from(">++++"))), Ok(0));
+        assert_eq!(interpreter.run(String::from(">++++")), Ok(0));
 
         assert_eq!(interpreter.pointer, 1);
         assert_eq!(interpreter.cells[0], 0);
         assert_eq!(interpreter.cells[1], 4);
-        assert_eq!(interpreter.bf_code, vec!['>', '+', '+', '+' , '+']);
+        // assert_eq!(interpreter.commands, vec!['>', '+', '+', '+', '+']);
 
         // reset
         interpreter.reset();
@@ -313,21 +383,6 @@ mod tests {
         assert_eq!(interpreter.pointer, 0);
         assert_eq!(interpreter.cells[0], 0);
         assert_eq!(interpreter.cells[1], 0);
-        assert_eq!(interpreter.bf_code, Vec::<char>::new());
-
-        assert_eq!(interpreter.run(None), Ok(0));
-    }
-
-    #[test]
-    fn test_from_char() {
-        assert_eq!(BfCommand::from_char(&'>', 0), Some(BfCommand::IncPtr));
-        assert_eq!(BfCommand::from_char(&'<', 0), Some(BfCommand::DecPtr));
-        assert_eq!(BfCommand::from_char(&'+', 0), Some(BfCommand::IncVal));
-        assert_eq!(BfCommand::from_char(&'-', 0), Some(BfCommand::DecVal));
-        assert_eq!(BfCommand::from_char(&'.', 0), Some(BfCommand::Print));
-        assert_eq!(BfCommand::from_char(&',', 0), Some(BfCommand::Read));
-        assert_eq!(BfCommand::from_char(&'[', 0), Some(BfCommand::LoopStart(0)));
-        assert_eq!(BfCommand::from_char(&']', 0), Some(BfCommand::LoopEnd(0)));
-        assert_eq!(BfCommand::from_char(&' ', 0), None);
+        assert_eq!(interpreter.bf_commands, Vec::<BfCommand>::new());
     }
 }

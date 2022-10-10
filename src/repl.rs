@@ -19,8 +19,15 @@ impl Repl {
     }
 
     pub fn run(mut self) {
+        let mut code_bat = String::new();
+        let mut is_loop = false;
         loop {
-            print!("\n {}", PROMPT);
+            if is_loop {
+                print!("... ");
+            } else {
+                print!("{}", PROMPT);
+            }
+
             std::io::stdout().flush().unwrap_or_else(|_| {
                 error!("Failed to flush stdout");
                 std::process::exit(1);
@@ -38,10 +45,18 @@ impl Repl {
 
             self.history.push(input.clone()); // Save input to history
 
+            if input.contains('[') && (!input.contains(']') && !is_loop) {
+                let loop_start_index = input.find('[').unwrap();
+
+                code_bat.push_str(&input[loop_start_index..]);
+                is_loop = true;
+                input = input[..loop_start_index].to_string();
+            }
+
             if input.starts_with(COMMAND_PREFIX) {
                 self.run_repl_cmd(input);
             } else {
-                match self.interpreter.run(Some(input)) {
+                match self.interpreter.run(input) {
                     Ok(_) => {
                         info!("Successfully ran brainfuck source code from REPL");
                     }
@@ -108,7 +123,7 @@ impl Repl {
 
                                 // Run all commands in history
                                 for cmd in self.history.iter() {
-                                    match self.interpreter.run(Some(cmd.clone())) {
+                                    match self.interpreter.run(cmd.clone()) {
                                         Ok(_) => {
                                             info!(
                                                 "Successfully ran brainfuck source code from REPL"
@@ -168,4 +183,26 @@ pub fn start(interpreter: Interpreter) {
     println!("Enter !help to get more fu*king help");
 
     Repl::new(interpreter).run();
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+        #[test]
+    fn nested_loop_level_1() {
+        let mut interpreter = Interpreter::new(
+            30000,
+            vec![],
+        );
+
+
+        assert_eq!(interpreter.run(String::from("++")), Ok(0));
+        assert_eq!(interpreter.run(String::from("[>++")), Ok(0));
+        assert_eq!(interpreter.run(String::from("[>+<-]")), Ok(0));
+        assert_eq!(interpreter.run(String::from("<-]")), Ok(0));
+        assert_eq!(interpreter.cells[2], 4);
+
+        println!();
+    }
 }
