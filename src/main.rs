@@ -19,9 +19,13 @@ fn main() {
     let args = Args::parse();
     info!("Parsed command line arguments: {:?}", args);
 
+    let term = console::Term::stdout();
+
     info!("Initializing interpreter");
     let mut interpreter =
-        Interpreter::new(args.array_size, args.features.unwrap_or_else(|| vec![]));
+        Interpreter::new(args.array_size,
+                         args.features.unwrap_or_else(|| vec![]),
+        &term);
 
     match args.source {
         Some(source) => {
@@ -56,6 +60,6 @@ fn main() {
                 }
             }
         }
-        None => repl::start(interpreter),
+        None => repl::start(interpreter, term),
     }
 }

@@ -1,9 +1,11 @@
 use crate::bf_interpreter::interpreter::Interpreter;
 use colored::Colorize;
 use std::io::Write;
+use console::{Term, Key};
 
 struct Repl {
     pub interpreter: Interpreter,
+    term: console::Term,
     history: Vec<String>,
     loop_body: String,
     loop_depth: usize,
@@ -14,9 +16,10 @@ const HISTORY_FILE: &str = "bf-interpreter-history.bfr";
 const COMMAND_PREFIX: &str = "!";
 
 impl Repl {
-    pub fn new(interpreter: Interpreter) -> Repl {
+    pub fn new(interpreter: Interpreter, term: Term) -> Repl {
         Repl {
             interpreter,
+            term,
             history: Vec::new(),
             loop_body: String::new(),
             loop_depth: 0,
@@ -26,33 +29,85 @@ impl Repl {
     // #[no_panic]
     pub fn run(mut self) -> Result<(), std::io::Error> {
         loop {
-            print!(
-                "{}",
-                if self.loop_depth != 0 {
-                    "........ ".yellow()
-                } else {
-                    PROMPT.to_string().truecolor(54, 76, 76)
-                }
-            );
+            self.print_prompt();
 
             std::io::stdout().flush()?;
 
-            let mut user_input = String::new();
+            match self.read_input() {
+                Ok(input) => {
+                    let user_input = input.trim().to_string(); // Remove trailing newline
 
-            match std::io::stdin().read_line(&mut user_input) {
-                Ok(_) => {}
+                    if !user_input.is_empty() && user_input.len() > 0 {
+                        self.history.push(user_input.clone()); // Save input to history
+                        self.process(user_input); // Process the input
+                    }
+                }
                 Err(e) => {
-                    error!("Failed to read input: {}", e);
-                    std::process::exit(1);
+                    eprintln!("Error: {}", e);
                 }
             }
-            user_input = user_input.trim().to_string(); // Remove trailing newline
+        }
+    }
 
-            if !user_input.is_empty() && user_input.len() > 0 {
-                self.history.push(user_input.clone()); // Save input to history
-                self.process(user_input); // Process the input
+    fn print_prompt(&self) {
+        print!(
+            "{}",
+            if self.loop_depth != 0 {
+                "........ ".yellow()
+            } else {
+                PROMPT.to_string().truecolor(54, 76, 76)
+            }
+        );
+    }
+
+    fn read_input(&mut self) -> Result<String, std::io::Error> {
+        let mut input = String::new();
+        let mut rev_index = 0;
+
+        loop {
+            let key = self.term.read_key()?; // Read key from terminal
+
+            match key {
+                Key::ArrowUp => {
+                    if !self.history.is_empty() && rev_index < self.history.len() {
+                        let last = self.history.get(self.history.len() - 1 - rev_index)
+                            .unwrap();
+                        rev_index += 1;
+                        self.term.clear_line()?;
+                        self.print_prompt();
+                        self.term.write_str(last)?;
+                        input = last.clone();
+                    }
+                }
+                Key::ArrowDown => {
+                    if !self.history.is_empty() && rev_index > 0 {
+                        let first = self.history.get(self.history.len() - rev_index)
+                            .unwrap();
+                        rev_index -= 1;
+                        self.term.clear_line()?;
+                        self.print_prompt();
+                        self.term.write_str(first)?;
+                        input = first.clone();
+                    }
+                }
+                Key::Char(c) => {
+                    self.term.write_str(&c.to_string())?;
+                    input.push(c);
+                }
+                Key::Backspace => {
+                    self.term.clear_line()?;
+                    self.term.write_str(&input[0..input.len() - 1])?;
+                    self.term.move_cursor_left(1)?;
+                    input.pop();
+                }
+                Key::Enter => {
+                    self.term.write_str("\n")?;
+                    break;
+                }
+                _ => {}
             }
         }
+        Ok(input)
     }
 
     pub fn process(&mut self, mut user_input: String) {
@@ -140,7 +195,7 @@ impl Repl {
                         println!(
                             "Current pointer value: {} = \'{}\' (char)",
                             self.interpreter.cells[self.interpreter.pointer],
-                            self.interpreter.cells[self.interpreter.pointer] as char
+                            self.interpreter.cells[self.interpreter.pointer].to_char().unwrap_or_else(|_| '?')
                         );
                     }
                     "history" | "h" => {
@@ -233,7 +288,7 @@ impl Repl {
                             user_input,
                             (COMMAND_PREFIX.to_string() + "help").green()
                         )
-                        .red()
+                            .red()
                     ),
                 }
             }
@@ -245,7 +300,7 @@ impl Repl {
 /// Run the REPL
 /// # Arguments
 /// * `interpreter` - The interpreter to use
-pub fn start(interpreter: Interpreter) {
+pub fn start(interpreter: Interpreter, term: Term) {
     info!("Entering REPL mode");
     println!(
         "{}\n\
@@ -263,7 +318,7 @@ pub fn start(interpreter: Interpreter) {
         (COMMAND_PREFIX.to_string() + "help").bold().green(),
     );
 
-    match Repl::new(interpreter).run() {
+    match Repl::new(interpreter, term).run() {
         Ok(_) => {
             info!("Successfully ran REPL");
         }
@@ -278,12 +333,14 @@ pub fn start(interpreter: Interpreter) {
 mod tests {
     use super::*;
     use pretty_assertions::assert_eq;
+    use crate::bf_interpreter::cell::Cell;
 
     #[test]
     fn nested_loop_level_1() {
-        let interpreter = Interpreter::new(4, vec![]);
+        let mut term = Term::stdout();
+        let interpreter = Interpreter::new(4, vec![], &mut term);
 
-        let mut repl = Repl::new(interpreter);
+        let mut repl = Repl::new(interpreter, term);
 
         repl.process("++".to_string());
         repl.process("[>++".to_string());
@@ -292,16 +349,17 @@ mod tests {
 
         let cells = &repl.interpreter.cells;
 
-        assert_eq!(cells[0], 0);
-        assert_eq!(cells[1], 0);
-        assert_eq!(cells[2], 4);
+        assert_eq!(cells[0], Cell::default_cell(&vec![]));
+        assert_eq!(cells[1], Cell::default_cell(&vec![]));
+        assert_eq!(cells[2], Cell::new(4, &vec![]));
     }
 
     #[test]
     fn nested_loop_level_2() {
-        let interpreter = Interpreter::new(4, vec![]);
+        let mut term = console::Term::stdout();
+        let interpreter = Interpreter::new(4, vec![], &mut term);
 
-        let mut repl = Repl::new(interpreter);
+        let mut repl = Repl::new(interpreter, term);
 
         repl.process("++".to_string());
         repl.process("[>++".to_string());
@@ -313,16 +371,17 @@ mod tests {
 
         let cells = &repl.interpreter.cells;
 
-        assert_eq!(cells[0], 0);
-        assert_eq!(cells[1], 0);
-        assert_eq!(cells[2], 4);
+        assert_eq!(cells[0], Cell::default_cell(&vec![]));
+        assert_eq!(cells[1], Cell::default_cell(&vec![]));
+        assert_eq!(cells[2], Cell::new(4, &vec![]));
     }
 
     #[test]
     fn print_my_first_name() {
-        let interpreter = Interpreter::new(10, vec![]);
+        let mut term = console::Term::stdout();
+        let interpreter = Interpreter::new(10, vec![], &mut term);
 
-        let mut repl = Repl::new(interpreter);
+        let mut repl = Repl::new(interpreter, term);
 
         let code = "++++ ++++ 8
         [
@@ -384,9 +443,10 @@ mod tests {
 
     #[test]
     fn print_my_first_name_in_one_command() {
-        let interpreter = Interpreter::new(10, vec![]);
+        let mut term = console::Term::stdout();
+        let interpreter = Interpreter::new(10, vec![], &mut term);
 
-        let mut repl = Repl::new(interpreter);
+        let mut repl = Repl::new(interpreter, term);
 
         let code = "++++++++[>++++[>++<-]>>>>>>++[<<<->>>-]<<<<<<<-]>>+.<<++++[>+++
         [>+++<-]>++<<-]>>+.<<+++[>+++[>-<-]>-<<-]>>-.<<++++++[>>+++<<-]>>."
@@ -397,9 +457,10 @@ mod tests {
 
     #[test]
     fn print_hello_world() {
-        let interpreter = Interpreter::new(10, vec![]);
+        let mut term = console::Term::stdout();
+        let interpreter = Interpreter::new(10, vec![], &mut term);
 
-        let mut repl = Repl::new(interpreter);
+        let mut repl = Repl::new(interpreter, term);
 
         let _ = "[ This program prints \"Hello World!\" and a newline to the screen, its
                 length is 106 active command characters. [It is not the shortest.]
@@ -438,8 +499,8 @@ mod tests {
                 >>+.                    Add 1 to Cell #5 gives us an exclamation point
                 >++.                    And finally a newline from Cell #6
             "
-        .to_string()
-        .split("\n")
-        .for_each(|s| repl.process(s.to_string()));
+            .to_string()
+            .split("\n")
+            .for_each(|s| repl.process(s.to_string()));
     }
 }

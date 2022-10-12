@@ -1,24 +1,31 @@
 use crate::arguments;
 use crate::bf_interpreter::error::{InterpreterError, InterpreterErrorKind};
-use std::io::{Read, Write};
+use std::io::{Write};
 use std::{char, usize, vec};
+use crate::bf_interpreter::cell::Cell;
 
 pub struct Interpreter {
-    pub cells: Vec<u8>,
+    pub cells: Vec<Cell>,
     pub pointer: usize,
     pub bf_commands: Vec<BfCommand>,
     brackets: Vec<BfCommand>,
     pub features: Vec<arguments::Feature>,
+    term: console::Term,
 }
 
 impl Interpreter {
-    pub fn new(array_size: usize, features: Vec<arguments::Feature>) -> Self {
+    pub fn new(
+        array_size: usize,
+        features: Vec<arguments::Feature>,
+        term: &console::Term,
+    ) -> Self {
         Self {
-            cells: vec![0; array_size],
+            cells: vec![Cell::default_cell(&features); array_size],
             pointer: 0,
             bf_commands: vec![],
             brackets: Vec::new(),
             features,
+            term: term.clone(),
         }
     }
 
@@ -34,7 +41,7 @@ impl Interpreter {
     // +[>++<-]
     fn iterate(&mut self, code: &Vec<BfCommand>) -> Result<(), InterpreterError> {
         trace!("Iterate: {:?}", code);
-        while self.cells[self.pointer] != 0 {
+        while self.cells[self.pointer].get_value_utf8() != 0 {
             self.run_brainfuck_code(code)?;
         }
         Ok(())
@@ -85,29 +92,15 @@ impl Interpreter {
 
     fn increment_value(&mut self) -> Result<(), InterpreterError> {
         trace!("Increment value");
-        if self.cells[self.pointer] == 255 {
-            if !self.features.contains(&arguments::Feature::NoReverseValue) {
-                self.cells[self.pointer] = 0;
-            } else {
-                return Err(InterpreterErrorKind::ValueOutOfBounds.to_error());
-            }
-        } else {
-            self.cells[self.pointer] += 1;
-        }
+        self.cells[self.pointer].increment(
+            !self.features.contains(&arguments::Feature::NoReverseValue))?;
         Ok(())
     }
 
     fn decrement_value(&mut self) -> Result<(), InterpreterError> {
         trace!("Decrement value");
-        if self.cells[self.pointer] == 0 {
-            if !self.features.contains(&arguments::Feature::NoReverseValue) {
-                self.cells[self.pointer] = 255;
-            } else {
-                return Err(InterpreterErrorKind::ValueOutOfBounds.to_error());
-            }
-        } else {
-            self.cells[self.pointer] -= 1;
-        }
+        self.cells[self.pointer].decrement(
+            !self.features.contains(&arguments::Feature::NoReverseValue))?;
         Ok(())
     }
 
@@ -115,13 +108,13 @@ impl Interpreter {
         trace!("Output value");
 
         if self.features.contains(&arguments::Feature::AllowUtf8) {
-            let c = char::from_u32(self.cells[self.pointer] as u32);
+            let c = char::from_u32(self.cells[self.pointer].get_value_utf8());
             match c {
                 Some(c) => print!("{}", c),
                 None => return Err(InterpreterErrorKind::InvalidUtf8.to_error()),
             }
         } else {
-            print!("{}", self.cells[self.pointer] as char);
+            print!("{}", self.cells[self.pointer].get_value() as char);
         }
         match std::io::stdout().flush() {
             Ok(_) => Ok(()),
@@ -131,18 +124,25 @@ impl Interpreter {
 
     fn input_value(&mut self) -> Result<(), InterpreterError> {
         trace!("Input value");
-        let mut input = [0; 1];
-        match std::io::stdin().read_exact(&mut input) {
-            Ok(_) => {
-                self.cells[self.pointer] = input[0];
-                Ok(())
+        match self.term.read_char() {
+            Ok(ch) => {
+                if self.features.contains(&arguments::Feature::AllowUtf8) {
+                    self.cells[self.pointer].set_value_utf8(ch);
+                } else {
+                    self.cells[self.pointer].set_value(ch);
+                }
+                print!("{}", ch);
+                match std::io::stdout().flush() {
+                    Ok(_) => Ok(()),
+                    Err(e) => Err(InterpreterErrorKind::FlushError(e).to_error()),
+                }
             }
             Err(e) => Err(InterpreterErrorKind::IoError(e).to_error()),
         }
     }
 
     pub fn reset(&mut self) {
-        self.cells = vec![0; self.cells.len()];
+        self.cells = vec![Cell::default_cell(&self.features); self.cells.len()];
         self.pointer = 0;
         self.brackets = Vec::new();
         self.bf_commands = Vec::new();
@@ -217,7 +217,8 @@ mod tests {
 
     #[test]
     fn print_h_combine_repl() {
-        let mut interpreter = Interpreter::new(30000, vec![]);
+        let mut interpreter = Interpreter::new(30000, vec![], 
+                                               &console::Term::stdout());
 
         assert_eq!(
             interpreter.run(String::from(">+++++++++[<++++ ++++>-]<.")),
@@ -229,7 +230,8 @@ mod tests {
 
     #[test]
     fn print_h_repl() {
-        let mut interpreter = Interpreter::new(30000, vec![]);
+        let mut interpreter = Interpreter::new(30000, vec![], 
+                                               &console::Term::stdout());
 
         assert_eq!(interpreter.run(String::from(">+++++++++")), Ok(0));
         assert_eq!(interpreter.run(String::from("[<++++ ++++>-]<.")), Ok(0));
@@ -239,17 +241,19 @@ mod tests {
 
     #[test]
     fn nested_loop_level_1_combine() {
-        let mut interpreter = Interpreter::new(5, vec![]);
+        let mut interpreter = Interpreter::new(5, vec![], 
+                                               &console::Term::stdout());
 
         assert_eq!(interpreter.run(String::from("++[>++[>+<-]<-]")), Ok(0));
-        assert_eq!(interpreter.cells[2], 4);
+        assert_eq!(interpreter.cells[2], Cell::new(4, &vec![]));
 
         println!();
     }
 
     #[test]
     fn execute_hello_world_from_file() {
-        let mut interpreter = Interpreter::new(30000, vec![]);
+        let mut interpreter = Interpreter::new(30000, vec![], 
+                                               &console::Term::stdout());
 
         println!();
 
@@ -263,7 +267,8 @@ mod tests {
 
     #[test]
     fn execute_print_hi_from_file() {
-        let mut interpreter = Interpreter::new(30000, vec![]);
+        let mut interpreter = Interpreter::new(30000, vec![], 
+                                               &console::Term::stdout());
 
         println!();
 
@@ -277,7 +282,8 @@ mod tests {
 
     #[test]
     fn execute_print_hi_yooo_from_file() {
-        let mut interpreter = Interpreter::new(30000, vec![]);
+        let mut interpreter = Interpreter::new(30000, vec![], 
+                                               &console::Term::stdout());
 
         println!();
 
@@ -291,7 +297,8 @@ mod tests {
 
     #[test]
     fn execute_print_my_first_name_from_formatted_file() {
-        let mut interpreter = Interpreter::new(30000, vec![]);
+        let mut interpreter = Interpreter::new(30000, vec![], 
+                                               &console::Term::stdout());
 
         println!();
 
@@ -305,7 +312,8 @@ mod tests {
 
     #[test]
     fn execute_print_my_first_name_from_file() {
-        let mut interpreter = Interpreter::new(30000, vec![]);
+        let mut interpreter = Interpreter::new(30000, vec![], 
+                                               &console::Term::stdout());
 
         println!();
 
@@ -319,7 +327,8 @@ mod tests {
 
     #[test]
     fn execute_print_my_first_name_and_last_name_from_formatted_file() {
-        let mut interpreter = Interpreter::new(30000, vec![]);
+        let mut interpreter = Interpreter::new(30000, vec![], 
+                                               &console::Term::stdout());
 
         println!();
 
@@ -333,7 +342,8 @@ mod tests {
 
     #[test]
     fn execute_print_my_first_name_and_last_name_from_file() {
-        let mut interpreter = Interpreter::new(30000, vec![]);
+        let mut interpreter = Interpreter::new(30000, vec![], 
+                                               &console::Term::stdout());
 
         println!();
 
@@ -347,21 +357,22 @@ mod tests {
 
     #[test]
     fn reset() {
-        let mut interpreter = Interpreter::new(30000, vec![]);
+        let mut interpreter = Interpreter::new(30000, vec![], 
+                                               &console::Term::stdout());
 
         assert_eq!(interpreter.run(String::from(">++++")), Ok(0));
 
         assert_eq!(interpreter.pointer, 1);
-        assert_eq!(interpreter.cells[0], 0);
-        assert_eq!(interpreter.cells[1], 4);
+        assert_eq!(interpreter.cells[0], Cell::new(0, &vec![]));
+        assert_eq!(interpreter.cells[1], Cell::new(4, &vec![]));
         // assert_eq!(interpreter.commands, vec!['>', '+', '+', '+', '+']);
 
         // reset
         interpreter.reset();
 
         assert_eq!(interpreter.pointer, 0);
-        assert_eq!(interpreter.cells[0], 0);
-        assert_eq!(interpreter.cells[1], 0);
+        assert_eq!(interpreter.cells[0], Cell::new(0, &vec![]));
+        assert_eq!(interpreter.cells[1], Cell::new(0, &vec![]));
         assert_eq!(interpreter.bf_commands, Vec::<BfCommand>::new());
     }
 }
