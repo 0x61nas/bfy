@@ -6,7 +6,6 @@ use std::{char, usize, vec};
 pub struct Interpreter<'a> {
     pub cells: Vec<u8>,
     pub pointer: usize,
-    pub array_size: usize,
     pub bf_commands: Vec<BfCommand>,
     brackets: Vec<BfCommand>,
     pub input: &'a Box<dyn Read>,
@@ -24,7 +23,6 @@ impl<'a> Interpreter<'a> {
         Self {
             cells: vec![0; array_size],
             pointer: 0,
-            array_size,
             bf_commands: vec![],
             brackets: Vec::new(),
             input,
@@ -71,7 +69,7 @@ impl<'a> Interpreter<'a> {
     fn increment_pointer(&mut self) -> Result<(), InterpreterError> {
         trace!("Increment pointer");
         self.pointer += 1;
-        if self.pointer >= self.array_size {
+        if self.pointer >= self.cells.len() {
             if self.features.contains(&arguments::Feature::ReversePointer) {
                 self.pointer = 0;
             } else {
@@ -85,7 +83,7 @@ impl<'a> Interpreter<'a> {
         trace!("Decrement pointer");
         if self.pointer == 0 {
             if self.features.contains(&arguments::Feature::ReversePointer) {
-                self.pointer = self.array_size - 1;
+                self.pointer = self.cells.len() - 1;
             } else {
                 return Err(InterpreterErrorKind::PointerOutOfBounds(self.pointer).to_error());
             }
@@ -154,7 +152,7 @@ impl<'a> Interpreter<'a> {
     }
 
     pub fn reset(&mut self) {
-        self.cells = vec![0; self.array_size];
+        self.cells = vec![0; self.cells.len()];
         self.pointer = 0;
         self.brackets = Vec::new();
         self.bf_commands = Vec::new();
