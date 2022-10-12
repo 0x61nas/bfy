@@ -1,21 +1,26 @@
-![brainfuc*k interpreter](./assets/cover.png)
+<p align="center"> 
+
+<img alt="brainfuc*k interpreter" src="./assets/cover.png" width="100%" />
+
+</p>
+
 # brainfuc*k interpreter: a simple brainfuc*k interpreter and REPL writen in rust 🦀
 
 ## Install
 
 - from crates.io
-    ```bash
-    crago install bf-bf_interpreter
+    ```shell
+    cargo install bf-interpreter
     ```
 - From aur: 
-  ```shell 
+  ```shell
   yay -S bf-interpreter
   ```
 
 ## Options and arguments
 
-```bash
-bf-bf_interpreter --help
+```shell
+bf-interpreter --help
 ```
 ```text
 Brainfu*k interpreter and REPL written in Rust
@@ -52,7 +57,7 @@ Options:
 ### Examples
 
 ```bash
-bf-bf_interpreter test_code/hello_world.bf
+bf-interpreter test_code/hello_world.bf
 ```
 ```text
 Hello world!
@@ -61,14 +66,14 @@ Exiting with code: 0
 ```
 
 ```bash
-bf-bf_interpreter -w test_code/hello_world.bf
+bf-interpreter -w test_code/hello_world.bf
 ```
 ```text
 Hello world!
 ```
 
 ```bash
-bf-bf_interpreter test_code/print_hi_yooo.bf
+bf-interpreter test_code/print_hi_yooo.bf
 ```
 ```text
 Hi yoooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo!Successfully ran brainfuck source code from file: test_code/print_hi_yooo.bf
@@ -76,13 +81,13 @@ Exiting with code: 0
 ```
 
 ```bash
-bf-bf_interpreter -w test_code/print_hi_yooo.bf
+bf-interpreter -w test_code/print_hi_yooo.bf
 ```
 ```text
 Hi yoooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo!
 ```
 
 ```bash
-bf-bf_interpreter test_code/like_cat.bf
+bf-interpreter test_code/like_cat.bf
 ```
 ![output](./screenshots/like_cat_output.png)
