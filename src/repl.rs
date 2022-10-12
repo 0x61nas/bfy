@@ -285,7 +285,7 @@ mod tests {
         repl.process("<-]".to_string());
         repl.process("<-]".to_string());
 
-        let cells = &repl.interpreter().cells;
+        let cells = &repl.interpreter.cells;
 
         assert_eq!(cells[0], 0);
         assert_eq!(cells[1], 0);
