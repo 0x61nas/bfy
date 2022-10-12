@@ -1,23 +1,19 @@
 use crate::arguments;
 use crate::bf_interpreter::error::{InterpreterError, InterpreterErrorKind};
-use std::io::{Read, Write};
+use std::io::{BufRead, Read, Write};
 use std::{char, usize, vec};
 
-pub struct Interpreter<'a> {
+pub struct Interpreter {
     pub cells: Vec<u8>,
     pub pointer: usize,
     pub bf_commands: Vec<BfCommand>,
     brackets: Vec<BfCommand>,
-    pub input: &'a Box<dyn Read>,
-    pub output: &'a Box<dyn Write>,
     pub features: Vec<arguments::Feature>,
 }
 
-impl<'a> Interpreter<'a> {
+impl Interpreter {
     pub fn new(
         array_size: usize,
-        input: &'a mut Box<dyn Read>,
-        output: &'a mut Box<dyn Write>,
         features: Vec<arguments::Feature>,
     ) -> Self {
         Self {
@@ -25,8 +21,6 @@ impl<'a> Interpreter<'a> {
             pointer: 0,
             bf_commands: vec![],
             brackets: Vec::new(),
-            input,
-            output,
             features,
         }
     }

@@ -3,7 +3,7 @@ mod repl;
 mod utils;
 mod bf_interpreter;
 
-use std::io::{Read, Write};
+use std::io::{BufRead, Write};
 use clap::Parser;
 extern crate pretty_env_logger;
 #[macro_use]
@@ -20,13 +20,9 @@ fn main() {
     let args = Args::parse();
     info!("Parsed command line arguments: {:?}", args);
 
-    let mut stdin: Box<dyn Read> = Box::new(std::io::stdin());
-    let mut stdout: Box<dyn Write> = Box::new(std::io::stdout());
     info!("Initializing interpreter");
     let mut interpreter = Interpreter::new(
         args.array_size,
-        &mut stdin,
-        &mut stdout,
         args.features.unwrap_or_else(|| vec![]),
     );
 
@@ -41,8 +37,9 @@ fn main() {
                             "Successfully ran brainfuck source code from file: {}",
                             source
                         ).bold().green());
-                        println!("Exiting with code: {exit_code}");
-                        std::process::exit(0);
+                        println!("{}{}", "Exiting with code: ".truecolor(33, 97, 61),
+                                 exit_code.to_string().bold().green());
+                        std::process::exit(exit_code);
                     }
                 }
                 Err(e) => {
@@ -51,6 +48,6 @@ fn main() {
                 }
             }
         }
-        None => repl::start(&mut interpreter, &mut std::io::stdin(), &mut std::io::stdout()),
+        None => repl::start(interpreter),
     }
 }
