@@ -1,4 +1,4 @@
-use std::fmt::{Debug, Formatter, Display};
+use std::fmt::{Debug, Display, Formatter};
 
 #[derive(PartialEq)]
 pub struct InterpreterError {
@@ -62,10 +62,15 @@ impl InterpreterErrorKind {
 impl Display for InterpreterErrorKind {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         match self {
-            InterpreterErrorKind::PointerOutOfBounds(pointer) => write!(f, "Pointer out of bounds {}", pointer),
+            InterpreterErrorKind::PointerOutOfBounds(pointer) => {
+                write!(f, "Pointer out of bounds {}", pointer)
+            }
             InterpreterErrorKind::ValueOutOfBounds => write!(f, "Value out of bounds"),
-            InterpreterErrorKind::IoError(error) =>
-                write!(f, "Failed to read byte from stdin: no bytes available: {}", error),
+            InterpreterErrorKind::IoError(error) => write!(
+                f,
+                "Failed to read byte from stdin: no bytes available: {}",
+                error
+            ),
             InterpreterErrorKind::FlushError(e) => write!(f, "Failed to flush stdout: {}", e),
             InterpreterErrorKind::UnmatchedBracket => write!(f, "Unmatched bracket"),
             InterpreterErrorKind::InvalidUtf8 => write!(f, "Invalid utf8"),
@@ -88,8 +93,13 @@ mod tests {
         assert_eq!(error.to_string(), "Value out of bounds");
         assert_eq!(error.code, 12);
 
-        let error = InterpreterErrorKind::IoError(std::io::Error::new(std::io::ErrorKind::Other, "test")).to_error();
-        assert_eq!(error.to_string(), "Failed to read byte from stdin: no bytes available: test");
+        let error =
+            InterpreterErrorKind::IoError(std::io::Error::new(std::io::ErrorKind::Other, "test"))
+                .to_error();
+        assert_eq!(
+            error.to_string(),
+            "Failed to read byte from stdin: no bytes available: test"
+        );
         assert_eq!(error.code, 13);
 
         /*let error = InterpreterErrorKind::FlushError(e).to_error();

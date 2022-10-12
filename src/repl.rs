@@ -1,7 +1,6 @@
 use crate::bf_interpreter::interpreter::Interpreter;
-use std::io::{Write, BufRead};
 use colored::Colorize;
-
+use std::io::Write;
 
 struct Repl {
     pub interpreter: Interpreter,
@@ -27,12 +26,13 @@ impl Repl {
     // #[no_panic]
     pub fn run(mut self) -> Result<(), std::io::Error> {
         loop {
-            print!("{}",
-                   if self.loop_depth != 0 {
-                       "........ ".yellow()
-                   } else {
-                       PROMPT.to_string().truecolor(54, 76, 76)
-                   }
+            print!(
+                "{}",
+                if self.loop_depth != 0 {
+                    "........ ".yellow()
+                } else {
+                    PROMPT.to_string().truecolor(54, 76, 76)
+                }
             );
 
             std::io::stdout().flush()?;
@@ -119,13 +119,22 @@ impl Repl {
                         println!("{}", format!("Current array: {:?}", self.interpreter.cells));
                     }
                     "array_size" | "as" => {
-                        println!("{}", format!("Current array size: {}",
-                                               self.interpreter.cells.len()
-                                                   .to_string().bold().green()));
+                        println!(
+                            "{}",
+                            format!(
+                                "Current array size: {}",
+                                self.interpreter.cells.len().to_string().bold().green()
+                            )
+                        );
                     }
                     "pointer" | "p" => {
-                        println!("{}", format!("Current pointer: {}",
-                                               self.interpreter.pointer.to_string().bold().green()));
+                        println!(
+                            "{}",
+                            format!(
+                                "Current pointer: {}",
+                                self.interpreter.pointer.to_string().bold().green()
+                            )
+                        );
                     }
                     "pointer_value" | "pv" => {
                         println!(
@@ -143,11 +152,17 @@ impl Repl {
                     "save" | "s" => {
                         let file_name = cmd.next().unwrap_or(HISTORY_FILE);
 
-                        println!("{}", format!("Saving history to file: {file_name}").yellow());
+                        println!(
+                            "{}",
+                            format!("Saving history to file: {file_name}").yellow()
+                        );
                         match std::fs::write(file_name, self.history.join("\n")) {
                             Ok(_) => {
-                                println!("{}", format!("Successfully saved history to file: {file_name}")
-                                    .green());
+                                println!(
+                                    "{}",
+                                    format!("Successfully saved history to file: {file_name}")
+                                        .green()
+                                );
                             }
                             Err(e) => {
                                 error!("Failed to save history to file: {}", e);
@@ -157,11 +172,17 @@ impl Repl {
                     "load" | "l" => {
                         let file_name = cmd.next().unwrap_or(HISTORY_FILE);
 
-                        println!("{}", format!("Loading history from file: {file_name}").yellow());
+                        println!(
+                            "{}",
+                            format!("Loading history from file: {file_name}").yellow()
+                        );
                         match std::fs::read_to_string(file_name) {
                             Ok(history) => {
-                                println!("{}", format!("Successfully loaded history from file: {file_name}")
-                                    .green());
+                                println!(
+                                    "{}",
+                                    format!("Successfully loaded history from file: {file_name}")
+                                        .green()
+                                );
                                 self.history = history.split("\n").map(|s| s.to_string()).collect();
 
                                 // Run all commands in history
@@ -192,7 +213,8 @@ impl Repl {
                         self.history = Vec::new();
                     }
                     "help" => {
-                        println!("!array, !a: print the current array\n\
+                        println!(
+                            "!array, !a: print the current array\n\
                         !array_size, !as: print the current array size\n\
                         !pointer, !p: print the current pointer\n\
                         !pointer_value, !pv: print the current pointer value\n\
@@ -201,11 +223,18 @@ impl Repl {
                         !load, !l: load the REPL history from a file\n\
                         !reset, !r: reset the REPL\n\
                         !help: print this help message\n\
-                        !fuck: exit the REPL");
+                        !fuck: exit the REPL"
+                        );
                     }
-                    _ => println!("{}", format!("Unknown command: {}, type {} to show the help",
-                                                user_input, (COMMAND_PREFIX.to_string() + "help").green()
-                    ).red()),
+                    _ => println!(
+                        "{}",
+                        format!(
+                            "Unknown command: {}, type {} to show the help",
+                            user_input,
+                            (COMMAND_PREFIX.to_string() + "help").green()
+                        )
+                        .red()
+                    ),
                 }
             }
             None => {}
@@ -218,17 +247,20 @@ impl Repl {
 /// * `interpreter` - The interpreter to use
 pub fn start(interpreter: Interpreter) {
     info!("Entering REPL mode");
-    println!("{}\n\
+    println!(
+        "{}\n\
             Brainfuck interpreter v {}\nBy {}\n\
             {}\n\
             Type {} to exit :D\n\
             type {} to get more fu*king help",
-             "Welcome to the brainfuck REPL mode! :)".green(),
-             clap::crate_version!().to_string().yellow(),
-             clap::crate_authors!().to_string().green(),
-             "Enter your brainfuck code and press enter to run it.".italic().blue(),
-             (COMMAND_PREFIX.to_string() + "fuck").bold().red(),
-             (COMMAND_PREFIX.to_string() + "help").bold().green(),
+        "Welcome to the brainfuck REPL mode! :)".green(),
+        clap::crate_version!().to_string().yellow(),
+        clap::crate_authors!().to_string().green(),
+        "Enter your brainfuck code and press enter to run it."
+            .italic()
+            .blue(),
+        (COMMAND_PREFIX.to_string() + "fuck").bold().red(),
+        (COMMAND_PREFIX.to_string() + "help").bold().green(),
     );
 
     match Repl::new(interpreter).run() {
@@ -249,10 +281,7 @@ mod tests {
 
     #[test]
     fn nested_loop_level_1() {
-        let interpreter = Interpreter::new(
-            4,
-            vec![],
-        );
+        let interpreter = Interpreter::new(4, vec![]);
 
         let mut repl = Repl::new(interpreter);
 
@@ -270,10 +299,7 @@ mod tests {
 
     #[test]
     fn nested_loop_level_2() {
-        let interpreter = Interpreter::new(
-            4,
-            vec![],
-        );
+        let interpreter = Interpreter::new(4, vec![]);
 
         let mut repl = Repl::new(interpreter);
 
@@ -294,10 +320,7 @@ mod tests {
 
     #[test]
     fn print_my_first_name() {
-        let interpreter = Interpreter::new(
-            10,
-            vec![],
-        );
+        let interpreter = Interpreter::new(10, vec![]);
 
         let mut repl = Repl::new(interpreter);
 
@@ -348,7 +371,11 @@ mod tests {
             >>+++
             <<-
         ]
-        >>. Print s".to_string().split("\n").map(|s| s.to_string()).collect::<Vec<String>>();
+        >>. Print s"
+            .to_string()
+            .split("\n")
+            .map(|s| s.to_string())
+            .collect::<Vec<String>>();
 
         for line in code {
             repl.process(line);
@@ -357,25 +384,20 @@ mod tests {
 
     #[test]
     fn print_my_first_name_in_one_command() {
-        let interpreter = Interpreter::new(
-            10,
-            vec![],
-        );
+        let interpreter = Interpreter::new(10, vec![]);
 
         let mut repl = Repl::new(interpreter);
 
         let code = "++++++++[>++++[>++<-]>>>>>>++[<<<->>>-]<<<<<<<-]>>+.<<++++[>+++
-        [>+++<-]>++<<-]>>+.<<+++[>+++[>-<-]>-<<-]>>-.<<++++++[>>+++<<-]>>.".to_string();
+        [>+++<-]>++<<-]>>+.<<+++[>+++[>-<-]>-<<-]>>-.<<++++++[>>+++<<-]>>."
+            .to_string();
 
         repl.process(code);
     }
 
     #[test]
     fn print_hello_world() {
-        let interpreter = Interpreter::new(
-            10,
-            vec![],
-        );
+        let interpreter = Interpreter::new(10, vec![]);
 
         let mut repl = Repl::new(interpreter);
 
@@ -415,6 +437,9 @@ mod tests {
                 +++.------.--------.    Cell #3 for 'rl' and 'd'
                 >>+.                    Add 1 to Cell #5 gives us an exclamation point
                 >++.                    And finally a newline from Cell #6
-            ".to_string().split("\n").for_each(|s| repl.process(s.to_string()));
+            "
+        .to_string()
+        .split("\n")
+        .for_each(|s| repl.process(s.to_string()));
     }
 }

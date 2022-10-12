@@ -1,8 +1,7 @@
 mod arguments;
+mod bf_interpreter;
 mod repl;
 mod utils;
-mod bf_interpreter;
-
 
 use clap::Parser;
 extern crate pretty_env_logger;
@@ -21,24 +20,33 @@ fn main() {
     info!("Parsed command line arguments: {:?}", args);
 
     info!("Initializing interpreter");
-    let mut interpreter = Interpreter::new(
-        args.array_size,
-        args.features.unwrap_or_else(|| vec![]),
-    );
+    let mut interpreter =
+        Interpreter::new(args.array_size, args.features.unwrap_or_else(|| vec![]));
 
     match args.source {
         Some(source) => {
             info!("Running brainfuck source code from file: {}", source);
             match interpreter.run(utils::read_brainfuck_code(&source)) {
                 Ok(exit_code) => {
-                    info!("Finished running brainfuck source code from file: {}", source);
+                    info!(
+                        "Finished running brainfuck source code from file: {}",
+                        source
+                    );
                     if !args.without_tiles {
-                        println!("{}", format!(
-                            "Successfully ran brainfuck source code from file: {}",
-                            source
-                        ).bold().green());
-                        println!("{}{}", "Exiting with code: ".truecolor(33, 97, 61),
-                                 exit_code.to_string().bold().green());
+                        println!(
+                            "{}",
+                            format!(
+                                "Successfully ran brainfuck source code from file: {}",
+                                source
+                            )
+                            .bold()
+                            .green()
+                        );
+                        println!(
+                            "{}{}",
+                            "Exiting with code: ".truecolor(33, 97, 61),
+                            exit_code.to_string().bold().green()
+                        );
                         std::process::exit(exit_code);
                     }
                 }

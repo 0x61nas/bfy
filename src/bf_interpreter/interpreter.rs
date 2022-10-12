@@ -12,10 +12,7 @@ pub struct Interpreter {
 }
 
 impl Interpreter {
-    pub fn new(
-        array_size: usize,
-        features: Vec<arguments::Feature>,
-    ) -> Self {
+    pub fn new(array_size: usize, features: Vec<arguments::Feature>) -> Self {
         Self {
             cells: vec![0; array_size],
             pointer: 0,
@@ -33,7 +30,6 @@ impl Interpreter {
             Err(e) => Err(e),
         }
     }
-
 
     // +[>++<-]
     fn iterate(&mut self, code: &Vec<BfCommand>) -> Result<(), InterpreterError> {
@@ -189,11 +185,9 @@ fn to_bf_commands(bf_code: Vec<char>) -> Result<Vec<BfCommand>, InterpreterError
                 bf_commands.push(BfCommand::Loop(to_bf_commands(bf_code[i + 1..j].to_vec())?));
                 i = j;
             }
-            _ => {
-                match BfCommand::from(bf_code[i]) {
-                    Some(command) => bf_commands.push(command),
-                    None => (),
-                }
+            _ => match BfCommand::from(bf_code[i]) {
+                Some(command) => bf_commands.push(command),
+                None => (),
             },
         }
         i += 1;
@@ -218,27 +212,24 @@ impl BfCommand {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use pretty_assertions::assert_eq; // for testing only
     use crate::utils;
+    use pretty_assertions::assert_eq; // for testing only
 
     #[test]
     fn print_h_combine_repl() {
-        let mut interpreter = Interpreter::new(
-            30000,
-            vec![],
-        );
+        let mut interpreter = Interpreter::new(30000, vec![]);
 
-        assert_eq!(interpreter.run(String::from(">+++++++++[<++++ ++++>-]<.")), Ok(0));
+        assert_eq!(
+            interpreter.run(String::from(">+++++++++[<++++ ++++>-]<.")),
+            Ok(0)
+        );
 
         println!();
     }
 
     #[test]
     fn print_h_repl() {
-        let mut interpreter = Interpreter::new(
-            30000,
-            vec![],
-        );
+        let mut interpreter = Interpreter::new(30000, vec![]);
 
         assert_eq!(interpreter.run(String::from(">+++++++++")), Ok(0));
         assert_eq!(interpreter.run(String::from("[<++++ ++++>-]<.")), Ok(0));
@@ -248,10 +239,7 @@ mod tests {
 
     #[test]
     fn nested_loop_level_1_combine() {
-        let mut interpreter = Interpreter::new(
-            5,
-            vec![],
-        );
+        let mut interpreter = Interpreter::new(5, vec![]);
 
         assert_eq!(interpreter.run(String::from("++[>++[>+<-]<-]")), Ok(0));
         assert_eq!(interpreter.cells[2], 4);
@@ -259,113 +247,107 @@ mod tests {
         println!();
     }
 
-
     #[test]
     fn execute_hello_world_from_file() {
-        let mut interpreter = Interpreter::new(
-            30000,
-            vec![],
-        );
-
+        let mut interpreter = Interpreter::new(30000, vec![]);
 
         println!();
 
-        assert_eq!(interpreter.run(
-            utils::read_brainfuck_code(
-                &String::from("test_code/hello_world.bf"))), Ok(0));
+        assert_eq!(
+            interpreter.run(utils::read_brainfuck_code(&String::from(
+                "test_code/hello_world.bf"
+            ))),
+            Ok(0)
+        );
     }
 
     #[test]
     fn execute_print_hi_from_file() {
-        let mut interpreter = Interpreter::new(
-            30000,
-            vec![],
-        );
+        let mut interpreter = Interpreter::new(30000, vec![]);
 
         println!();
 
-        assert_eq!(interpreter.run(
-            utils::read_brainfuck_code(&String::from("test_code/print_hi.bf"))), Ok(0));
+        assert_eq!(
+            interpreter.run(utils::read_brainfuck_code(&String::from(
+                "test_code/print_hi.bf"
+            ))),
+            Ok(0)
+        );
     }
 
     #[test]
     fn execute_print_hi_yooo_from_file() {
-        let mut interpreter = Interpreter::new(
-            30000,
-            vec![],
-        );
+        let mut interpreter = Interpreter::new(30000, vec![]);
 
         println!();
 
-        assert_eq!(interpreter.run(
-            utils::read_brainfuck_code(&String::from("test_code/print_hi_yooo.bf"))),
-                   Ok(0));
+        assert_eq!(
+            interpreter.run(utils::read_brainfuck_code(&String::from(
+                "test_code/print_hi_yooo.bf"
+            ))),
+            Ok(0)
+        );
     }
 
     #[test]
     fn execute_print_my_first_name_from_formatted_file() {
-        let mut interpreter = Interpreter::new(
-            30000,
-            vec![],
-        );
+        let mut interpreter = Interpreter::new(30000, vec![]);
 
         println!();
 
-        assert_eq!(interpreter.run(
-            utils::read_brainfuck_code(&String::from("test_code/print_my_first_name_formatted.bf"))),
-                   Ok(0));
+        assert_eq!(
+            interpreter.run(utils::read_brainfuck_code(&String::from(
+                "test_code/print_my_first_name_formatted.bf"
+            ))),
+            Ok(0)
+        );
     }
 
     #[test]
     fn execute_print_my_first_name_from_file() {
-        let mut interpreter = Interpreter::new(
-            30000,
-            vec![],
-        );
+        let mut interpreter = Interpreter::new(30000, vec![]);
 
         println!();
 
-        assert_eq!(interpreter.run(
-            utils::read_brainfuck_code(&String::from("test_code/print_my_first_name.bf"))),
-                   Ok(0));
+        assert_eq!(
+            interpreter.run(utils::read_brainfuck_code(&String::from(
+                "test_code/print_my_first_name.bf"
+            ))),
+            Ok(0)
+        );
     }
 
     #[test]
     fn execute_print_my_first_name_and_last_name_from_formatted_file() {
-        let mut interpreter = Interpreter::new(
-            30000,
-            vec![],
-        );
+        let mut interpreter = Interpreter::new(30000, vec![]);
 
         println!();
 
-        assert_eq!(interpreter.run(
-            utils::read_brainfuck_code(
-                &String::from("test_code/print_my_first_name_and_last_name_formatted.bf"))),
-                   Ok(0));
+        assert_eq!(
+            interpreter.run(utils::read_brainfuck_code(&String::from(
+                "test_code/print_my_first_name_and_last_name_formatted.bf"
+            ))),
+            Ok(0)
+        );
     }
 
     #[test]
     fn execute_print_my_first_name_and_last_name_from_file() {
-        let mut interpreter = Interpreter::new(
-            30000,
-            vec![],
-        );
+        let mut interpreter = Interpreter::new(30000, vec![]);
 
         println!();
 
-        assert_eq!(interpreter.run(utils::read_brainfuck_code(
-            &String::from("test_code/print_my_first_name_and_last_name.bf"))),
-                   Ok(0));
+        assert_eq!(
+            interpreter.run(utils::read_brainfuck_code(&String::from(
+                "test_code/print_my_first_name_and_last_name.bf"
+            ))),
+            Ok(0)
+        );
     }
 
     #[test]
     fn reset() {
-        let mut interpreter = Interpreter::new(
-            30000,
-            vec![],
-        );
-
+        let mut interpreter = Interpreter::new(30000, vec![]);
 
         assert_eq!(interpreter.run(String::from(">++++")), Ok(0));
 
