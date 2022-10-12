@@ -1,6 +1,6 @@
 use crate::arguments;
 use crate::bf_interpreter::error::{InterpreterError, InterpreterErrorKind};
-use std::io::{BufRead, Read, Write};
+use std::io::{Read, Write};
 use std::{char, usize, vec};
 
 pub struct Interpreter {

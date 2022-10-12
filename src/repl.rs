@@ -1,10 +1,10 @@
 use crate::bf_interpreter::interpreter::Interpreter;
-use std::io::{Write, Read, BufRead, BufReader, Stdout, Stdin};
+use std::io::{Write, BufRead};
 use colored::Colorize;
-use no_panic::no_panic;
+
 
 struct Repl {
-    interpreter: Interpreter,
+    pub interpreter: Interpreter,
     history: Vec<String>,
     loop_body: String,
     loop_depth: usize,
@@ -211,12 +211,6 @@ impl Repl {
             None => {}
         }
     }
-
-    /// Get the interpreter
-    /// for testing purposes only!
-    pub fn interpreter(&self) -> &Interpreter {
-        &self.interpreter
-    }
 }
 
 /// Run the REPL
@@ -267,7 +261,7 @@ mod tests {
         repl.process("[>+<-]".to_string());
         repl.process("<-]".to_string());
 
-        let cells = &repl.interpreter().cells;
+        let cells = &repl.interpreter.cells;
 
         assert_eq!(cells[0], 0);
         assert_eq!(cells[1], 0);

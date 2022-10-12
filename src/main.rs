@@ -3,7 +3,7 @@ mod repl;
 mod utils;
 mod bf_interpreter;
 
-use std::io::{BufRead, Write};
+
 use clap::Parser;
 extern crate pretty_env_logger;
 #[macro_use]
