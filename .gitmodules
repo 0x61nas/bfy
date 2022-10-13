@@ -1,0 +1,3 @@
+[submodule "archpackage/bfy"]
+	path = archpackage/bfy
+	url = ssh://aur@aur.archlinux.org/bfy.git
