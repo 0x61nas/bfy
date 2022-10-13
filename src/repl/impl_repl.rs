@@ -102,11 +102,14 @@ impl Repl {
     }
 
     pub fn process(&mut self, mut user_input: String) {
+        let mut print = false;
         user_input.chars().for_each(|ch| {
             if ch == '[' {
                 self.loop_depth += 1;
             } else if ch == ']' {
                 self.loop_depth -= 1;
+            } else if ch == '.' {
+                print = true;
             }
         });
         match user_input.find('[') {
@@ -143,6 +146,9 @@ impl Repl {
             match self.interpreter.run(user_input) {
                 Ok(_) => {
                     info!("Successfully ran brainfuck source code from REPL");
+                    if print {
+                        println!(); // Print newline after output, if user requested print any output
+                    }
                 }
                 Err(e) => {
                     error!("Failed to run brainfuck source code from REPL: {}", e);
