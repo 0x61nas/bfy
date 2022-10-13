@@ -11,9 +11,7 @@ keywords = [
     "brainfuck",
     "interpreter",
     "repl",
-    "bf",
     "bf-repl",
-    "brainfuck-interpreter",
     "brainfuck-repl",
 ]
 categories = ["command-line-utilities"]
