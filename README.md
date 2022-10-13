@@ -6,6 +6,12 @@
 
 # brainfuc*k interpreter: a simple brainfuc*k interpreter and REPL writen in rust 🦀
 
+## Features
+- Run brainfuc*k code from a file 💫
+- Run brainfuc*k live code from the REPL 🚀
+- Support utf-8 characters including emojis 😍 (optional)
+- You can control in the array size 📏
+
 ## Install
 
 - from crates.io
