@@ -102,10 +102,6 @@ mod tests {
         );
         assert_eq!(error.code, 13);
 
-        /*let error = InterpreterErrorKind::FlushError(e).to_error();
-        assert_eq!(error.to_string(), "Failed to read byte from stdin: no bytes available");
-        assert_eq!(error.code, 14);*/
-
         let error = InterpreterErrorKind::UnmatchedBracket.to_error();
         assert_eq!(error.to_string(), "Unmatched bracket");
         assert_eq!(error.code, 15);

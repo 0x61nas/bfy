@@ -19,13 +19,11 @@ fn main() {
     let args = Args::parse();
     info!("Parsed command line arguments: {:?}", args);
 
-    let term = console::Term::stdout();
-
     info!("Initializing interpreter");
     let mut interpreter = Interpreter::new(
         args.array_size,
         args.features.unwrap_or_else(|| vec![]),
-        term,
+        console::Term::stdout(),
     );
 
     match args.source {
@@ -41,7 +39,7 @@ fn main() {
                         println!(
                             "{}",
                             format!(
-                                "Successfully ran brainfuck source code from file: {}",
+                                "Successfully run brainfuck source code from file: {}",
                                 source
                             )
                             .bold()
