@@ -25,7 +25,7 @@ fn main() {
     let mut interpreter =
         Interpreter::new(args.array_size,
                          args.features.unwrap_or_else(|| vec![]),
-        &term);
+        term);
 
     match args.source {
         Some(source) => {
@@ -60,6 +60,6 @@ fn main() {
                 }
             }
         }
-        None => repl::start(interpreter, term),
+        None => repl::start(interpreter),
     }
 }

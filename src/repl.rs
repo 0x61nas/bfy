@@ -5,7 +5,7 @@ use console::{Term, Key};
 
 struct Repl {
     pub interpreter: Interpreter,
-    term: console::Term,
+    term: Term,
     history: Vec<String>,
     loop_body: String,
     loop_depth: usize,
@@ -16,10 +16,10 @@ const HISTORY_FILE: &str = "bf-interpreter-history.bfr";
 const COMMAND_PREFIX: &str = "!";
 
 impl Repl {
-    pub fn new(interpreter: Interpreter, term: Term) -> Repl {
+    pub fn new(interpreter: Interpreter) -> Repl {
         Repl {
+            term: interpreter.term.clone(),
             interpreter,
-            term,
             history: Vec::new(),
             loop_body: String::new(),
             loop_depth: 0,
@@ -299,7 +299,7 @@ impl Repl {
 /// Run the REPL
 /// # Arguments
 /// * `interpreter` - The interpreter to use
-pub fn start(interpreter: Interpreter, term: Term) {
+pub fn start(interpreter: Interpreter) {
     info!("Entering REPL mode");
     println!(
         "{}\n\
@@ -317,7 +317,7 @@ pub fn start(interpreter: Interpreter, term: Term) {
         (COMMAND_PREFIX.to_string() + "help").bold().green(),
     );
 
-    match Repl::new(interpreter, term).run() {
+    match Repl::new(interpreter).run() {
         Ok(_) => {
             info!("Successfully ran REPL");
         }
@@ -336,10 +336,10 @@ mod tests {
 
     #[test]
     fn nested_loop_level_1() {
-        let mut term = Term::stdout();
-        let interpreter = Interpreter::new(4, vec![], &mut term);
+        let term = Term::stdout();
+        let interpreter = Interpreter::new(4, vec![], term);
 
-        let mut repl = Repl::new(interpreter, term);
+        let mut repl = Repl::new(interpreter);
 
         repl.process("++".to_string());
         repl.process("[>++".to_string());
@@ -355,10 +355,10 @@ mod tests {
 
     #[test]
     fn nested_loop_level_2() {
-        let mut term = console::Term::stdout();
-        let interpreter = Interpreter::new(4, vec![], &mut term);
+        let term = Term::stdout();
+        let interpreter = Interpreter::new(4, vec![], term);
 
-        let mut repl = Repl::new(interpreter, term);
+        let mut repl = Repl::new(interpreter);
 
         repl.process("++".to_string());
         repl.process("[>++".to_string());
@@ -377,10 +377,10 @@ mod tests {
 
     #[test]
     fn print_my_first_name() {
-        let mut term = console::Term::stdout();
-        let interpreter = Interpreter::new(10, vec![], &mut term);
+        let term = Term::stdout();
+        let interpreter = Interpreter::new(10, vec![], term);
 
-        let mut repl = Repl::new(interpreter, term);
+        let mut repl = Repl::new(interpreter);
 
         let code = "++++ ++++ 8
         [
@@ -449,10 +449,10 @@ mod tests {
 
     #[test]
     fn print_my_first_name_in_one_command() {
-        let mut term = Term::stdout();
-        let interpreter = Interpreter::new(10, vec![], &mut term);
+        let term = Term::stdout();
+        let interpreter = Interpreter::new(10, vec![], term);
 
-        let mut repl = Repl::new(interpreter, term);
+        let mut repl = Repl::new(interpreter);
 
         let code = "++++++++[>++++[>++>+++>++++>+<<<<-]>>>>>>++[<<<->>>-]<<<<<<<-]>>+.\
         <<++++[>+++[>+++<-]>++<<-]>>+.<<+++[>+++[>-<-]>-<<-]>>-.<<++++++[>>+++<<-]>>."
@@ -470,10 +470,10 @@ mod tests {
 
     #[test]
     fn print_hello_world() {
-        let mut term = console::Term::stdout();
-        let interpreter = Interpreter::new(10, vec![], &mut term);
+        let term = Term::stdout();
+        let interpreter = Interpreter::new(10, vec![], term);
 
-        let mut repl = Repl::new(interpreter, term);
+        let mut repl = Repl::new(interpreter);
 
         let _ = "[ This program prints \"Hello World!\" and a newline to the screen, its
                 length is 106 active command characters. [It is not the shortest.]

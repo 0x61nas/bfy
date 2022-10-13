@@ -10,14 +10,14 @@ pub struct Interpreter {
     pub bf_commands: Vec<BfCommand>,
     brackets: Vec<BfCommand>,
     pub features: Vec<arguments::Feature>,
-    term: console::Term,
+    pub term: console::Term,
 }
 
 impl Interpreter {
     pub fn new(
         array_size: usize,
         features: Vec<arguments::Feature>,
-        term: &console::Term,
+        term: console::Term,
     ) -> Self {
         Self {
             cells: vec![Cell::default_cell(&features); array_size],
@@ -25,7 +25,7 @@ impl Interpreter {
             bf_commands: vec![],
             brackets: Vec::new(),
             features,
-            term: term.clone(),
+            term,
         }
     }
 
@@ -126,11 +126,7 @@ impl Interpreter {
         trace!("Input value");
         match self.term.read_char() {
             Ok(ch) => {
-                if self.features.contains(&arguments::Feature::AllowUtf8) {
-                    self.cells[self.pointer].set_value_utf8(ch);
-                } else {
                     self.cells[self.pointer].set_value(ch);
-                }
                 print!("{}", ch);
                 match std::io::stdout().flush() {
                     Ok(_) => Ok(()),
@@ -211,14 +207,14 @@ impl BfCommand {
 
 #[cfg(test)]
 mod tests {
+    use console::Term;
     use super::*;
     use crate::utils;
     use pretty_assertions::assert_eq; // for testing only
 
     #[test]
     fn print_h_combine_repl() {
-        let mut interpreter = Interpreter::new(30000, vec![],
-                                               &console::Term::stdout());
+        let mut interpreter = Interpreter::new(30000, vec![], Term::stdout());
 
         assert_eq!(
             interpreter.run(String::from(">+++++++++[<++++ ++++>-]<.")),
@@ -231,7 +227,7 @@ mod tests {
     #[test]
     fn print_h_repl() {
         let mut interpreter = Interpreter::new(30000, vec![],
-                                               &console::Term::stdout());
+                                               Term::stdout());
 
         assert_eq!(interpreter.run(String::from(">+++++++++")), Ok(0));
         assert_eq!(interpreter.run(String::from("[<++++ ++++>-]<.")), Ok(0));
@@ -242,7 +238,7 @@ mod tests {
     #[test]
     fn nested_loop_level_1_combine() {
         let mut interpreter = Interpreter::new(5, vec![],
-                                               &console::Term::stdout());
+                                               Term::stdout());
 
         assert_eq!(interpreter.run(String::from("++[>++[>+<-]<-]")), Ok(0));
         assert_eq!(interpreter.cells[2], Cell::new(4, &vec![]));
@@ -253,7 +249,7 @@ mod tests {
     #[test]
     fn execute_hello_world_from_file() {
         let mut interpreter = Interpreter::new(30000, vec![],
-                                               &console::Term::stdout());
+                                               Term::stdout());
 
         println!();
 
@@ -268,7 +264,7 @@ mod tests {
     #[test]
     fn execute_print_hi_from_file() {
         let mut interpreter = Interpreter::new(30000, vec![],
-                                               &console::Term::stdout());
+                                               Term::stdout());
 
         println!();
 
@@ -283,7 +279,7 @@ mod tests {
     #[test]
     fn execute_print_hi_yooo_from_file() {
         let mut interpreter = Interpreter::new(30000, vec![],
-                                               &console::Term::stdout());
+                                               Term::stdout());
 
         println!();
 
@@ -298,7 +294,7 @@ mod tests {
     #[test]
     fn execute_print_my_first_name_from_formatted_file() {
         let mut interpreter = Interpreter::new(30000, vec![],
-                                               &console::Term::stdout());
+                                               Term::stdout());
 
         println!();
 
@@ -313,7 +309,7 @@ mod tests {
     #[test]
     fn execute_print_my_first_name_from_file() {
         let mut interpreter = Interpreter::new(30000, vec![],
-                                               &console::Term::stdout());
+                                               Term::stdout());
 
         println!();
 
@@ -336,7 +332,7 @@ mod tests {
     #[test]
     fn execute_print_my_first_name_and_last_name_from_formatted_file() {
         let mut interpreter = Interpreter::new(30000, vec![],
-                                               &console::Term::stdout());
+                                               Term::stdout());
 
         println!();
 
@@ -351,7 +347,7 @@ mod tests {
     #[test]
     fn execute_print_my_first_name_and_last_name_from_file() {
         let mut interpreter = Interpreter::new(30000, vec![],
-                                               &console::Term::stdout());
+                                               Term::stdout());
 
         println!();
 
@@ -366,7 +362,7 @@ mod tests {
     #[test]
     fn reset() {
         let mut interpreter = Interpreter::new(30000, vec![],
-                                               &console::Term::stdout());
+                                               Term::stdout());
 
         assert_eq!(interpreter.run(String::from(">++++")), Ok(0));
 

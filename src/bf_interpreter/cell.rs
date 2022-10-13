@@ -8,21 +8,14 @@ pub enum Cell {
 }
 
 impl Cell {
-    pub fn set_value_utf8(&mut self, ch: char) {
-        match self {
-            Cell::Byte(_) => {}
-            Cell::Utf8(p) => {
-                *p = ch as u32;
-            }
-        }
-    }
-
     pub fn set_value(&mut self, ch: char) {
         match self {
             Cell::Byte(p) => {
                 *p = ch as u8;
             }
-            Cell::Utf8(_) => {}
+            Cell::Utf8(p) => {
+                *p = ch as u32;
+            }
         }
     }
 }
@@ -36,6 +29,8 @@ impl Cell {
         }
     }
 
+    #[allow(dead_code)]
+    /// For testing purposes
     pub fn new(value: u32, future: &Vec<Feature>) -> Self {
         if future.contains(&Feature::AllowUtf8) {
             Cell::Utf8(value)
@@ -107,7 +102,7 @@ impl Cell {
     pub fn max_value(&self) -> u32 {
         match self {
             Self::Byte(_) => u8::MAX as u32,
-            Self::Utf8(_) => u32::MAX,
+            Self::Utf8(_) => 1114111,
         }
     }
 
@@ -132,4 +127,154 @@ impl std::fmt::Display for Cell {
             Self::Utf8(value) => write!(f, "{}", value),
         }
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use pretty_assertions::assert_eq;
+
+    #[test]
+    fn test_increment_u8_no_revers() {
+        let mut cell = Cell::default_cell(&vec![]);
+        cell.increment(true).unwrap();
+        assert_eq!(cell, Cell::Byte(1));
+
+        for _ in 0..254 {
+            cell.increment(true).unwrap();
+        }
+        assert_eq!(cell, Cell::Byte(255));
+
+        assert_eq!(cell.increment(true).unwrap_err(), InterpreterErrorKind::ValueOutOfBounds.to_error());
+        assert_eq!(cell, Cell::Byte(255));
+    }
+
+    #[test]
+    fn test_increment_u32_no_revers() {
+        let mut cell = Cell::default_cell(&vec![Feature::AllowUtf8]);
+        cell.increment(true).unwrap();
+        assert_eq!(cell, Cell::Utf8(1));
+
+        for _ in 0..1114110 {
+            cell.increment(true).unwrap();
+        }
+        assert_eq!(cell, Cell::Utf8(1114111));
+
+        assert_eq!(cell.increment(true).unwrap_err(), InterpreterErrorKind::ValueOutOfBounds.to_error());
+        assert_eq!(cell, Cell::Utf8(1114111));
+    }
+
+    #[test]
+    fn test_increment_u8_revers() {
+        let mut cell = Cell::default_cell(&vec![]);
+        cell.increment(false).unwrap();
+        assert_eq!(cell, Cell::Byte(1));
+
+        for _ in 0..254 {
+            cell.increment(false).unwrap();
+        }
+        assert_eq!(cell, Cell::Byte(255));
+
+        cell.increment(false).unwrap();
+        assert_eq!(cell, Cell::Byte(0));
+    }
+
+    #[test]
+    fn test_increment_u32_revers() {
+        let mut cell = Cell::default_cell(&vec![Feature::AllowUtf8]);
+        cell.increment(false).unwrap();
+        assert_eq!(cell, Cell::Utf8(1));
+
+        for _ in 0..1114110 {
+            cell.increment(false).unwrap();
+        }
+        assert_eq!(cell, Cell::Utf8(1114111));
+
+        cell.increment(false).unwrap();
+        assert_eq!(cell, Cell::Utf8(0));
+    }
+
+    #[test]
+    fn test_decrement_u8_no_revers() {
+        let mut cell = Cell::new(255, &vec![]);
+        cell.decrement(true).unwrap();
+        assert_eq!(cell, Cell::Byte(254));
+
+        for _ in 0..254 {
+            cell.decrement(true).unwrap();
+        }
+        assert_eq!(cell, Cell::Byte(0));
+
+        assert_eq!(cell.decrement(true).unwrap_err(), InterpreterErrorKind::ValueOutOfBounds.to_error());
+        assert_eq!(cell, Cell::Byte(0));
+    }
+
+    #[test]
+    fn test_decrement_u32_no_revers() {
+        let mut cell = Cell::new(1114111, &vec![Feature::AllowUtf8]);
+        cell.decrement(true).unwrap();
+        assert_eq!(cell, Cell::Utf8(1114110));
+
+        for _ in 0..1114110 {
+            cell.decrement(true).unwrap();
+        }
+        assert_eq!(cell, Cell::Utf8(0));
+
+        assert_eq!(cell.decrement(true).unwrap_err(), InterpreterErrorKind::ValueOutOfBounds.to_error());
+        assert_eq!(cell, Cell::Utf8(0));
+    }
+
+    #[test]
+    fn test_decrement_u8_revers() {
+        let mut cell = Cell::new(0, &vec![]);
+        cell.decrement(false).unwrap();
+        assert_eq!(cell, Cell::Byte(255));
+
+        for _ in 0..254 {
+            cell.decrement(false).unwrap();
+        }
+        assert_eq!(cell, Cell::Byte(1));
+
+        cell.decrement(false).unwrap();
+        assert_eq!(cell, Cell::Byte(0));
+    }
+
+    #[test]
+    fn test_decrement_u32_revers() {
+        let mut cell = Cell::new(0, &vec![Feature::AllowUtf8]);
+        cell.decrement(false).unwrap();
+        assert_eq!(cell, Cell::Utf8(1114111));
+
+        for _ in 0..1114110 {
+            cell.decrement(false).unwrap();
+        }
+        assert_eq!(cell, Cell::Utf8(1));
+
+        cell.decrement(false).unwrap();
+        assert_eq!(cell, Cell::Utf8(0));
+    }
+
+    #[test]
+    fn test_to_char() {
+        let cell = Cell::new(65, &vec![]);
+        assert_eq!(cell.to_char().unwrap(), 'A');
+
+        let cell = Cell::new(129408, &vec![Feature::AllowUtf8]);
+        assert_eq!(cell.to_char().unwrap(), '🦀');
+
+        let cell = Cell::new(129392, &vec![Feature::AllowUtf8]);
+        assert_eq!(cell.to_char().unwrap(), '🥰');
+    }
+
+    #[test]
+    fn test_set_value() {
+        let mut cell = Cell::default_cell(&vec![]);
+        cell.set_value('A');
+        assert_eq!(cell, Cell::Byte(65));
+
+        let mut cell = Cell::default_cell(&vec![Feature::AllowUtf8]);
+        cell.set_value('🦀');
+        assert_eq!(cell, Cell::Utf8(129408));
+    }
+
 }
