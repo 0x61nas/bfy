@@ -6,6 +6,7 @@ pub struct Args {
     /// The brainfuck source code file to run (if not will be entered in REPL mode)
     #[arg(default_value = None)]
     pub source: Option<String>,
+    /// The extra features to enable
     #[arg(short, long, default_value = None)]
     pub features: Option<Vec<Feature>>,
     /// The brainfuck array size
