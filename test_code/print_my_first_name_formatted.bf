@@ -1,5 +1,5 @@
 My first name (Anas)
-Formated:
+Formatted:
 ++++ ++++ 8
 [
    >++++

@@ -217,7 +217,7 @@ mod tests {
 
     #[test]
     fn print_h_combine_repl() {
-        let mut interpreter = Interpreter::new(30000, vec![], 
+        let mut interpreter = Interpreter::new(30000, vec![],
                                                &console::Term::stdout());
 
         assert_eq!(
@@ -230,7 +230,7 @@ mod tests {
 
     #[test]
     fn print_h_repl() {
-        let mut interpreter = Interpreter::new(30000, vec![], 
+        let mut interpreter = Interpreter::new(30000, vec![],
                                                &console::Term::stdout());
 
         assert_eq!(interpreter.run(String::from(">+++++++++")), Ok(0));
@@ -241,7 +241,7 @@ mod tests {
 
     #[test]
     fn nested_loop_level_1_combine() {
-        let mut interpreter = Interpreter::new(5, vec![], 
+        let mut interpreter = Interpreter::new(5, vec![],
                                                &console::Term::stdout());
 
         assert_eq!(interpreter.run(String::from("++[>++[>+<-]<-]")), Ok(0));
@@ -252,7 +252,7 @@ mod tests {
 
     #[test]
     fn execute_hello_world_from_file() {
-        let mut interpreter = Interpreter::new(30000, vec![], 
+        let mut interpreter = Interpreter::new(30000, vec![],
                                                &console::Term::stdout());
 
         println!();
@@ -267,7 +267,7 @@ mod tests {
 
     #[test]
     fn execute_print_hi_from_file() {
-        let mut interpreter = Interpreter::new(30000, vec![], 
+        let mut interpreter = Interpreter::new(30000, vec![],
                                                &console::Term::stdout());
 
         println!();
@@ -282,7 +282,7 @@ mod tests {
 
     #[test]
     fn execute_print_hi_yooo_from_file() {
-        let mut interpreter = Interpreter::new(30000, vec![], 
+        let mut interpreter = Interpreter::new(30000, vec![],
                                                &console::Term::stdout());
 
         println!();
@@ -297,7 +297,7 @@ mod tests {
 
     #[test]
     fn execute_print_my_first_name_from_formatted_file() {
-        let mut interpreter = Interpreter::new(30000, vec![], 
+        let mut interpreter = Interpreter::new(30000, vec![],
                                                &console::Term::stdout());
 
         println!();
@@ -312,7 +312,7 @@ mod tests {
 
     #[test]
     fn execute_print_my_first_name_from_file() {
-        let mut interpreter = Interpreter::new(30000, vec![], 
+        let mut interpreter = Interpreter::new(30000, vec![],
                                                &console::Term::stdout());
 
         println!();
@@ -323,11 +323,19 @@ mod tests {
             ))),
             Ok(0)
         );
+
+
+        assert_eq!(interpreter.cells[0], Cell::default_cell(&vec![]));
+        assert_eq!(interpreter.cells[1], Cell::default_cell(&vec![]));
+        assert_eq!(interpreter.cells[2], Cell::new(115, &vec![]));
+        assert_eq!(interpreter.cells[3], Cell::new(96, &vec![]));
+        assert_eq!(interpreter.cells[4], Cell::new(112, &vec![]));
+        assert_eq!(interpreter.cells[5], Cell::new(32, &vec![]));
     }
 
     #[test]
     fn execute_print_my_first_name_and_last_name_from_formatted_file() {
-        let mut interpreter = Interpreter::new(30000, vec![], 
+        let mut interpreter = Interpreter::new(30000, vec![],
                                                &console::Term::stdout());
 
         println!();
@@ -342,7 +350,7 @@ mod tests {
 
     #[test]
     fn execute_print_my_first_name_and_last_name_from_file() {
-        let mut interpreter = Interpreter::new(30000, vec![], 
+        let mut interpreter = Interpreter::new(30000, vec![],
                                                &console::Term::stdout());
 
         println!();
@@ -357,7 +365,7 @@ mod tests {
 
     #[test]
     fn reset() {
-        let mut interpreter = Interpreter::new(30000, vec![], 
+        let mut interpreter = Interpreter::new(30000, vec![],
                                                &console::Term::stdout());
 
         assert_eq!(interpreter.run(String::from(">++++")), Ok(0));

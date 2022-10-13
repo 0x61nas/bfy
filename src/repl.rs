@@ -111,25 +111,24 @@ impl Repl {
     }
 
     pub fn process(&mut self, mut user_input: String) {
+        user_input.chars().for_each(|ch| {
+            if ch == '[' {
+                self.loop_depth += 1;
+            } else if ch == ']' {
+                self.loop_depth -= 1;
+            }
+        });
         match user_input.find('[') {
-            Some(index) if self.loop_depth == 0 => {
+            Some(index) if self.loop_depth != 0 && self.loop_body.is_empty() => {
                 self.loop_body.push_str(&user_input[index..]);
-                self.loop_depth = 1;
                 user_input = user_input[..index].to_string();
             }
-            Some(_) => {
+            Some(_) if !self.loop_body.is_empty() => {
                 self.loop_body.push_str(&user_input);
-                user_input.matches('[').for_each(|_| self.loop_depth += 1);
-                user_input.matches(']').for_each(|_| self.loop_depth -= 1);
                 return;
             }
             _ => {
                 if user_input.contains(']') {
-                    if self.loop_depth == 0 {
-                        error!("Found ']' without matching '['");
-                        return;
-                    }
-                    self.loop_depth -= 1;
                     if self.loop_depth == 0 {
                         self.loop_body.push_str(&user_input);
                         user_input = self.loop_body.clone();
@@ -439,20 +438,34 @@ mod tests {
         for line in code {
             repl.process(line);
         }
+
+        assert_eq!(repl.interpreter.cells[0], Cell::default_cell(&vec![]));
+        assert_eq!(repl.interpreter.cells[1], Cell::default_cell(&vec![]));
+        assert_eq!(repl.interpreter.cells[2], Cell::new(115, &vec![]));
+        assert_eq!(repl.interpreter.cells[3], Cell::new(96, &vec![]));
+        assert_eq!(repl.interpreter.cells[4], Cell::new(112, &vec![]));
+        assert_eq!(repl.interpreter.cells[5], Cell::new(32, &vec![]));
     }
 
     #[test]
     fn print_my_first_name_in_one_command() {
-        let mut term = console::Term::stdout();
+        let mut term = Term::stdout();
         let interpreter = Interpreter::new(10, vec![], &mut term);
 
         let mut repl = Repl::new(interpreter, term);
 
-        let code = "++++++++[>++++[>++<-]>>>>>>++[<<<->>>-]<<<<<<<-]>>+.<<++++[>+++
-        [>+++<-]>++<<-]>>+.<<+++[>+++[>-<-]>-<<-]>>-.<<++++++[>>+++<<-]>>."
+        let code = "++++++++[>++++[>++>+++>++++>+<<<<-]>>>>>>++[<<<->>>-]<<<<<<<-]>>+.\
+        <<++++[>+++[>+++<-]>++<<-]>>+.<<+++[>+++[>-<-]>-<<-]>>-.<<++++++[>>+++<<-]>>."
             .to_string();
 
         repl.process(code);
+
+        assert_eq!(repl.interpreter.cells[0], Cell::default_cell(&vec![]));
+        assert_eq!(repl.interpreter.cells[1], Cell::default_cell(&vec![]));
+        assert_eq!(repl.interpreter.cells[2], Cell::new(115, &vec![]));
+        assert_eq!(repl.interpreter.cells[3], Cell::new(96, &vec![]));
+        assert_eq!(repl.interpreter.cells[4], Cell::new(112, &vec![]));
+        assert_eq!(repl.interpreter.cells[5], Cell::new(32, &vec![]));
     }
 
     #[test]
