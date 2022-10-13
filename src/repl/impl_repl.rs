@@ -43,7 +43,7 @@ impl Repl {
         print!(
             "{}",
             if self.loop_depth != 0 {
-                "........ ".yellow()
+                "............... ".yellow()
             } else {
                 PROMPT.to_string().truecolor(54, 76, 76)
             }
@@ -85,10 +85,10 @@ impl Repl {
                     self.term.write_str(&c.to_string())?;
                     input.push(c);
                 }
-                Key::Backspace => {
+                Key::Backspace if !input.is_empty() => {
                     self.term.clear_line()?;
+                    self.print_prompt();
                     self.term.write_str(&input[0..input.len() - 1])?;
-                    self.term.move_cursor_left(1)?;
                     input.pop();
                 }
                 Key::Enter => {
