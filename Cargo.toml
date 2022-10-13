@@ -5,7 +5,7 @@ edition = "2021"
 authors = ["Anas Elgarhy <anas.elgarhy.dev@gmail.com>"]
 license = "MIT"
 description = "Brainfu*k interpreter and REPL written in Rust"
-repository = "https://github.com/anas-elgarhy/bf-interpreter"
+repository = "https://github.com/anas-elgarhy/bfy"
 readme = "README.md"
 keywords = [
     "brainfuck",
@@ -17,8 +17,8 @@ keywords = [
     "brainfuck-repl",
 ]
 categories = ["command-line-utilities"]
-documentation = "https://docs.rs/bf-interpreter"
-homepage = "https://github.com/anas-elgarhy/bf-interpreter"
+documentation = "https://docs.rs/bfy"
+homepage = "https://github.com/anas-elgarhy/bfy"
 include = [
     "src/**/*",
     "Cargo.toml",
