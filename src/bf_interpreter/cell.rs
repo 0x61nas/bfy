@@ -55,7 +55,7 @@ impl Cell {
 
     pub fn increment(&mut self, no_reverse_value: bool) -> Result<(), InterpreterError> {
         if self.get_value_utf8() == self.max_value() && no_reverse_value {
-            return Err(InterpreterErrorKind::ValueOutOfBounds.to_error())
+            return Err(InterpreterErrorKind::ValueOutOfBounds.to_error());
         }
         match self {
             Self::Byte(value) => {
@@ -78,7 +78,7 @@ impl Cell {
 
     pub fn decrement(&mut self, no_reverse_value: bool) -> Result<(), InterpreterError> {
         if self.get_value_utf8() == 0 && no_reverse_value {
-            return Err(InterpreterErrorKind::ValueOutOfBounds.to_error())
+            return Err(InterpreterErrorKind::ValueOutOfBounds.to_error());
         }
         match self {
             Self::Byte(value) => {
@@ -109,7 +109,7 @@ impl Cell {
     pub fn to_char(&self) -> Result<char, InterpreterError> {
         let c = match self {
             Self::Byte(value) => Some(*value as char),
-            Self::Utf8(value) => char::from_u32(*value)
+            Self::Utf8(value) => char::from_u32(*value),
         };
 
         if let Some(c) = c {
@@ -145,7 +145,10 @@ mod tests {
         }
         assert_eq!(cell, Cell::Byte(255));
 
-        assert_eq!(cell.increment(true).unwrap_err(), InterpreterErrorKind::ValueOutOfBounds.to_error());
+        assert_eq!(
+            cell.increment(true).unwrap_err(),
+            InterpreterErrorKind::ValueOutOfBounds.to_error()
+        );
         assert_eq!(cell, Cell::Byte(255));
     }
 
@@ -160,7 +163,10 @@ mod tests {
         }
         assert_eq!(cell, Cell::Utf8(1114111));
 
-        assert_eq!(cell.increment(true).unwrap_err(), InterpreterErrorKind::ValueOutOfBounds.to_error());
+        assert_eq!(
+            cell.increment(true).unwrap_err(),
+            InterpreterErrorKind::ValueOutOfBounds.to_error()
+        );
         assert_eq!(cell, Cell::Utf8(1114111));
     }
 
@@ -205,7 +211,10 @@ mod tests {
         }
         assert_eq!(cell, Cell::Byte(0));
 
-        assert_eq!(cell.decrement(true).unwrap_err(), InterpreterErrorKind::ValueOutOfBounds.to_error());
+        assert_eq!(
+            cell.decrement(true).unwrap_err(),
+            InterpreterErrorKind::ValueOutOfBounds.to_error()
+        );
         assert_eq!(cell, Cell::Byte(0));
     }
 
@@ -220,7 +229,10 @@ mod tests {
         }
         assert_eq!(cell, Cell::Utf8(0));
 
-        assert_eq!(cell.decrement(true).unwrap_err(), InterpreterErrorKind::ValueOutOfBounds.to_error());
+        assert_eq!(
+            cell.decrement(true).unwrap_err(),
+            InterpreterErrorKind::ValueOutOfBounds.to_error()
+        );
         assert_eq!(cell, Cell::Utf8(0));
     }
 
@@ -276,5 +288,4 @@ mod tests {
         cell.set_value('🦀');
         assert_eq!(cell, Cell::Utf8(129408));
     }
-
 }

@@ -1,8 +1,8 @@
 use crate::arguments;
-use crate::bf_interpreter::error::{InterpreterError, InterpreterErrorKind};
-use std::io::{Write};
-use std::{char, usize, vec};
 use crate::bf_interpreter::cell::Cell;
+use crate::bf_interpreter::error::{InterpreterError, InterpreterErrorKind};
+use std::io::Write;
+use std::{char, usize, vec};
 
 pub struct Interpreter {
     pub cells: Vec<Cell>,
@@ -14,11 +14,7 @@ pub struct Interpreter {
 }
 
 impl Interpreter {
-    pub fn new(
-        array_size: usize,
-        features: Vec<arguments::Feature>,
-        term: console::Term,
-    ) -> Self {
+    pub fn new(array_size: usize, features: Vec<arguments::Feature>, term: console::Term) -> Self {
         Self {
             cells: vec![Cell::default_cell(&features); array_size],
             pointer: 0,
@@ -92,15 +88,15 @@ impl Interpreter {
 
     fn increment_value(&mut self) -> Result<(), InterpreterError> {
         trace!("Increment value");
-        self.cells[self.pointer].increment(
-            !self.features.contains(&arguments::Feature::NoReverseValue))?;
+        self.cells[self.pointer]
+            .increment(!self.features.contains(&arguments::Feature::NoReverseValue))?;
         Ok(())
     }
 
     fn decrement_value(&mut self) -> Result<(), InterpreterError> {
         trace!("Decrement value");
-        self.cells[self.pointer].decrement(
-            !self.features.contains(&arguments::Feature::NoReverseValue))?;
+        self.cells[self.pointer]
+            .decrement(!self.features.contains(&arguments::Feature::NoReverseValue))?;
         Ok(())
     }
 
@@ -126,7 +122,7 @@ impl Interpreter {
         trace!("Input value");
         match self.term.read_char() {
             Ok(ch) => {
-                    self.cells[self.pointer].set_value(ch);
+                self.cells[self.pointer].set_value(ch);
                 print!("{}", ch);
                 match std::io::stdout().flush() {
                     Ok(_) => Ok(()),
@@ -207,9 +203,9 @@ impl BfCommand {
 
 #[cfg(test)]
 mod tests {
-    use console::Term;
     use super::*;
     use crate::utils;
+    use console::Term;
     use pretty_assertions::assert_eq; // for testing only
 
     #[test]
@@ -226,8 +222,7 @@ mod tests {
 
     #[test]
     fn print_h_repl() {
-        let mut interpreter = Interpreter::new(30000, vec![],
-                                               Term::stdout());
+        let mut interpreter = Interpreter::new(30000, vec![], Term::stdout());
 
         assert_eq!(interpreter.run(String::from(">+++++++++")), Ok(0));
         assert_eq!(interpreter.run(String::from("[<++++ ++++>-]<.")), Ok(0));
@@ -237,8 +232,7 @@ mod tests {
 
     #[test]
     fn nested_loop_level_1_combine() {
-        let mut interpreter = Interpreter::new(5, vec![],
-                                               Term::stdout());
+        let mut interpreter = Interpreter::new(5, vec![], Term::stdout());
 
         assert_eq!(interpreter.run(String::from("++[>++[>+<-]<-]")), Ok(0));
         assert_eq!(interpreter.cells[2], Cell::new(4, &vec![]));
@@ -248,8 +242,7 @@ mod tests {
 
     #[test]
     fn execute_hello_world_from_file() {
-        let mut interpreter = Interpreter::new(30000, vec![],
-                                               Term::stdout());
+        let mut interpreter = Interpreter::new(30000, vec![], Term::stdout());
 
         println!();
 
@@ -263,8 +256,7 @@ mod tests {
 
     #[test]
     fn execute_print_hi_from_file() {
-        let mut interpreter = Interpreter::new(30000, vec![],
-                                               Term::stdout());
+        let mut interpreter = Interpreter::new(30000, vec![], Term::stdout());
 
         println!();
 
@@ -278,8 +270,7 @@ mod tests {
 
     #[test]
     fn execute_print_hi_yooo_from_file() {
-        let mut interpreter = Interpreter::new(30000, vec![],
-                                               Term::stdout());
+        let mut interpreter = Interpreter::new(30000, vec![], Term::stdout());
 
         println!();
 
@@ -293,8 +284,7 @@ mod tests {
 
     #[test]
     fn execute_print_my_first_name_from_formatted_file() {
-        let mut interpreter = Interpreter::new(30000, vec![],
-                                               Term::stdout());
+        let mut interpreter = Interpreter::new(30000, vec![], Term::stdout());
 
         println!();
 
@@ -308,8 +298,7 @@ mod tests {
 
     #[test]
     fn execute_print_my_first_name_from_file() {
-        let mut interpreter = Interpreter::new(30000, vec![],
-                                               Term::stdout());
+        let mut interpreter = Interpreter::new(30000, vec![], Term::stdout());
 
         println!();
 
@@ -319,7 +308,6 @@ mod tests {
             ))),
             Ok(0)
         );
-
 
         assert_eq!(interpreter.cells[0], Cell::default_cell(&vec![]));
         assert_eq!(interpreter.cells[1], Cell::default_cell(&vec![]));
@@ -331,8 +319,7 @@ mod tests {
 
     #[test]
     fn execute_print_my_first_name_and_last_name_from_formatted_file() {
-        let mut interpreter = Interpreter::new(30000, vec![],
-                                               Term::stdout());
+        let mut interpreter = Interpreter::new(30000, vec![], Term::stdout());
 
         println!();
 
@@ -346,8 +333,7 @@ mod tests {
 
     #[test]
     fn execute_print_my_first_name_and_last_name_from_file() {
-        let mut interpreter = Interpreter::new(30000, vec![],
-                                               Term::stdout());
+        let mut interpreter = Interpreter::new(30000, vec![], Term::stdout());
 
         println!();
 
@@ -361,8 +347,7 @@ mod tests {
 
     #[test]
     fn reset() {
-        let mut interpreter = Interpreter::new(30000, vec![],
-                                               Term::stdout());
+        let mut interpreter = Interpreter::new(30000, vec![], Term::stdout());
 
         assert_eq!(interpreter.run(String::from(">++++")), Ok(0));
 

@@ -22,10 +22,11 @@ fn main() {
     let term = console::Term::stdout();
 
     info!("Initializing interpreter");
-    let mut interpreter =
-        Interpreter::new(args.array_size,
-                         args.features.unwrap_or_else(|| vec![]),
-        term);
+    let mut interpreter = Interpreter::new(
+        args.array_size,
+        args.features.unwrap_or_else(|| vec![]),
+        term,
+    );
 
     match args.source {
         Some(source) => {
@@ -60,6 +61,6 @@ fn main() {
                 }
             }
         }
-        None => repl::start(interpreter),
+        None => repl::start_repl::start(interpreter),
     }
 }
