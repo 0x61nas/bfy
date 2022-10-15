@@ -4,82 +4,82 @@
 
 </p>
 
-# brainfuc*k interpreter: a simple brainfuc*k interpreter and REPL writen in rust 🦀
+# ⁭مترجم brainfu* k: مترجم بسيط من Brainfuc * K و REPL مكتوب في Rust 🦀
 
-## Features
-- Run brainfuc*k code from a file 💫
-- Run brainfuc*k live code from the REPL 🚀
-- Support utf-8 characters including emojis 😍 (optional)
-- You can control in the array size 📏
+## سمات
+- قم بتشغيل كود brainfu * k من ملف 💫
+- قم يسمح Brainfu * k الكود المباشر من REPL 🚀
+- دعم أحرف UTF-8 بما في ذلك الرموز التعبيرية 😍 (اختياري)
+- يمكنك التحكم في حجم المصفوفة 📏
 
-## Install
+## تثبيت
 
-- from crates.io
+- تثبيت crates.io:
     ```shell
     cargo install bfy
     ```
-- From aur: 
+- من aur: 
   ```shell
   yay -S bfy
   ```
 
-## Options and arguments
+## الخيارات والحجج
 <details>
-   <summary>Options table</summary>
+   <summary>جدول الخيارات</summary>
    <table>
       <thead>
          <tr>
-            <th>Option</th>
-            <th>Description</th>
-            <th>Default</th>
+            <th>اختيار</th>
+            <th>وصف</th>
+            <th>إفتراضي</th>
          </tr>
       </thead>
       <tbody>
          <tr>
             <td><code>-h</code>, <code>--help</code></td>
-            <td>Prints help information</td>
+            <td>طباعة معلومات المساعدة</td>
             <td></td>
          </tr>
          <tr>
             <td><code>-V</code>, <code>--version</code></td>
-            <td>Prints version information</td>
+            <td>يطبع معلومات الإصدار</td>
             <td></td>
          </tr>
          <tr>
             <td><code>-f</code>, <code>--features</code></td>
             <td>
-               The extra features to enable<br/>
-               Possible values:
+               الميزات الإضافية للتمكين<br/>
+               القيم الممكنة:
                <ul>
                   <li>no-reverse-value:<br/>
-                     If the value is you want decrement the value and the value is 0, don't set the value to 255, otherwise decrement the value.<br/>
-                     If the value is you want increment the value and the value is 255, don't set the value to 0, otherwise increment the value. The alias are:
-                     `nrv`
+                     إذا كانت القيمة تريد إنقاص القيمة وكانت القيمة 0 ، فلا تعين القيمة على 255 ، وإلا قلل القيمة. <br/>
+                      إذا كانت القيمة تريد زيادة القيمة وكانت القيمة 255 ، فلا تقم بتعيين القيمة على 0 ، وإلا قم بزيادة القيمة. الاسم المستعار هو:
+                      "nrv"
                   </li>
                   <li>reverse-pointer:<br/>
-                     If the pointer at the end of the array, set the pointer to 0, otherwise increment the pointer.<br/>
-                     If the pointer at the beginning of the array, set the pointer to the end of the array, otherwise decrement the pointer. The alias are: `rp`
+                    إذا كان المؤشر في نهاية المصفوفة ، فاضبط المؤشر على 0 ، وإلا قم بزيادة المؤشر. <br/>
+                      إذا كان المؤشر في بداية المصفوفة ، فاضبط المؤشر على نهاية المصفوفة ، وإلا قلل المؤشر. الاسم المستعار هو: `rp`
                   </li>
                   <li>allow-utf8:<br/>
-                     Allow the use of utf8 characters (32 bit), otherwise only 8 bit characters are allowed.<br/>
-                     Use this feature with caution because it increases the cell size from 8 bits to 32 bits.<br/>
-                     It also allow you to use the emoji in your brainfuck code :D, This is if you can
-                     preserve your mind so that you can access their digital value :).<br/>
-                     The `u32` in rust can only store values from 0 to 4294967295, but we
-                     can only use 0 to 1114111 (0x10FFFF) for now. The alias are: `utf8`
+                     اسمح باستخدام أحرف utf8 (32 بت) ، وإلا فلن يُسمح إلا باستخدام أحرف 8 بت. <br/>
+                      استخدم هذه الميزة بحذر لأنها تزيد حجم الخلية من 8 بت إلى 32 بت. <br/>
+                      كما يسمح لك باستخدام الرموز التعبيرية في كود مخادعك: D ، هذا إذا استطعت
+                      حافظ على عقلك حتى تتمكن من الوصول إلى قيمتها الرقمية :). <br/>
+                      يمكن لـ "u32" في الصدأ تخزين القيم من 0 إلى 4294967295 فقط ، لكننا
+                      يمكن فقط استخدام 0 إلى 1114111 (0x10FFFF) في الوقت الحالي. الاسم المستعار هو: `utf8`
                   </li>
                </ul>
             </td>
-            <td>n/a</td>
+            <td>غير متوفر</td>
          </tr>
          <tr>
             <td><code>-a</code>, <code>--array-size</code></td>
-            <td>The size of the array</td>
+            <td>حجم المصفوفة</td>
             <td>30000</td>
          </tr>
          <tr>
             <td><code>-w</code>, <code>--without-tiles</code></td>
-            <td>Dont print the tiles (e.g. exit code, file name, etc)</td>
+            <td>لا تقم بطباعة المربعات (مثل رمز الخروج واسم الملف وما إلى ذلك)</td>
             <td></td>
          </tr>
       </tbody>
@@ -88,7 +88,7 @@
 
 
 <details>
-<summary>Help option output</summary>
+<summary>مساعدة خيار الإخراج</summary>
 
 ```shell
 bfy --help
@@ -135,7 +135,7 @@ Options:
 
 </details>
 
-### Examples
+### أمثلة
 
 ```bash
 bfy test_code/hello_world.bf
@@ -172,7 +172,7 @@ Hi yoooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo!
 bfy test_code/like_cat.bf
 ```
 ![output](./screenshots/like_cat_output.png)
-> Note: The output is not the same as the current version of the interpreter, but it is the same as the output of the interpreter when I wrote the code.
+> ملاحظة: الإخراج ليس هو نفسه الإصدار الحالي للمترجم الفوري ، ولكنه مماثل لإخراج المترجم الفوري عندما أكتب الكود.
 
 ## REPL
 ```bash
@@ -180,18 +180,18 @@ bfy # REPL mode
 ```
 ![print @ and A in the repl](./screenshots/repl_print_at_and_A_0.1.0.png)
 
-## TODO
-- [ ] Add more tests
-- [ ] Add more examples
-- [ ] Create the brainfuck formatter
-- [ ] Add syntax highlighting in the REPL
-- [ ] Add auto completion in the REPL
-- [ ] Support dynamic array size feature
+## لكى يفعل
+- [ ] أضف المزيد من الاختبارات
+- [ ] أضف المزيد من الأمثلة
+- [ ] قم بإنشاء منسق brainfu * k
+- [ ] أضف تمييز بناء الجملة في REPL
+- [ ] أضف الإكمال التلقائي في REPL
+- [ ] دعم ميزة حجم الصفيف الديناميكي
 
-## Resources
-- [Brainfuck in wikipedia](https://en.wikipedia.org/wiki/Brainfuck)
-- [Programming in Brainfuck](http://cydathria.com/bf/brainfuck.html)
-- [Brainfuck: An Eight-Instruction Turing-Complete Programming Language](http://www.muppetlabs.com/~breadbox/bf)
-- [brainfuck-visualizer](https://github.com/usaikiran/brainfuck-visualizer)
-- [Basics of BrainFuck](https://gist.github.com/roachhd/dce54bec8ba55fb17d3a)
-- [An elegant programming language: Brainfuck](https://www.neperos.com/article/raqehg6b24ceadba)
+## مصادر
+- [مخنث فى ويكيبيديا](https://en.wikipedia.org/wiki/Brainfuck)
+- [البرمجة في Brainfuck](http://cydathria.com/bf/brainfuck.html)
+- [Brainfuck: لغة برمجة Turing-Complete ذات ثمانية تعليمات](http://www.muppetlabs.com/~breadbox/bf)
+- [Brainfuc * k- متخيل](https://github.com/usaikiran/brainfuck-visualizer)
+- [أساسيات BrainFuck](https://gist.github.com/roachhd/dce54bec8ba55fb17d3a)
+- [لغة برمجة أنيقة: Brainfuck](https://www.neperos.com/article/raqehg6b24ceadba)
