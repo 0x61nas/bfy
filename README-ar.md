@@ -190,9 +190,9 @@ bfy # REPL mode
 - [ ] دعم ميزة حجم الصفيف الديناميكي
 
 ## مصادر
-- [مخنث فى ويكيبيديا](https://en.wikipedia.org/wiki/Brainfuck)
-- [البرمجة في Brainfuck](http://cydathria.com/bf/brainfuck.html)
-- [Brainfuck: لغة برمجة Turing-Complete ذات ثمانية تعليمات](http://www.muppetlabs.com/~breadbox/bf)
-- [Brainfuc * k- متخيل](https://github.com/usaikiran/brainfuck-visualizer)
-- [أساسيات BrainFuck](https://gist.github.com/roachhd/dce54bec8ba55fb17d3a)
-- [لغة برمجة أنيقة: Brainfuck](https://www.neperos.com/article/raqehg6b24ceadba)
+- [Brainfuck in Wikipedia](https://en.wikipedia.org/wiki/Brainfuck)
+- [Programming in Brainfuck](http://cydathria.com/bf/brainfuck.html)
+- [Brainfuck: An Eight-Instruction Turing-Complete Programming Language](http://www.muppetlabs.com/~breadbox/bf)
+- [brainfuck-visualizer](https://github.com/usaikiran/brainfuck-visualizer)
+- [Basics of BrainFuck](https://gist.github.com/roachhd/dce54bec8ba55fb17d3a)
+- [An elegant programming language: Brainfuck](https://www.neperos.com/article/raqehg6b24ceadba)
