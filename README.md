@@ -7,7 +7,7 @@
 # brainfuc*k interpreter: a simple brainfuc*k interpreter and REPL writen in rust 🦀
 #### *Read this in other languages.*
 
-[AR Arabic-العربية](translations/README-ar.md)
+[AR Arabic-العربية](README-ar.md)
 
 ## Features
 - Run brainfuc*k code from a file 💫
